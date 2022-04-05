@@ -8,7 +8,7 @@
 # MONGODB_PASSWORD=123
 # INPUT_DIR=test/resources/input_directory
 #
-# * poetry run gunicorn job_service.app:app
+# poetry run gunicorn job_service.app:app
 
 version: '2'
 
