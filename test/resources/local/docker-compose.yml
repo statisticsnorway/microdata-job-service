@@ -1,0 +1,25 @@
+# Use this docker compose file to test api locally with a
+# running instance of mongodb.
+#
+# * Run: docker compose up
+# * Set environmental variables for application:
+# MONGODB_URL=mongodb://localhost:27017/jobdb
+# MONGODB_USER=USER
+# MONGODB_PASSWORD=123
+# INPUT_DIR=test/resources/input_directory
+#
+# * poetry run gunicorn job_service.app:app
+
+version: '2'
+
+services:
+  mongodb:
+    image: docker.io/bitnami/mongodb:4.4
+    ports:
+      - "27017:27017"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MONGODB_USERNAME=USER
+      - MONGODB_PASSWORD=123
+      - MONGODB_DATABASE=jobdb
+
