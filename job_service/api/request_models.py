@@ -9,7 +9,6 @@ from job_service.exceptions.exceptions import BadRequestException
 class CommandEnum(str, Enum):
     ADD_OR_CHANGE_DATA = 'ADD_OR_CHANGE_DATA'
     REMOVE_DATASET = 'REMOVE'
-    CHANGE_DATASET = 'IMPORT'
     PATCH_METADATA = 'PATCH_METADATA'
     BUMP_VERSION = 'BUMP_VERSION'
     SET_STATUS = 'SET_STATUS'

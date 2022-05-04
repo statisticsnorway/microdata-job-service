@@ -138,10 +138,10 @@ class JobDb:
             if log is not None:
                 self.completed.update_one(find_query, add_log_query)
             return
-
-        self.in_progress.update_one(find_query, update_status_query)
-        if log is not None:
-            self.in_progress.update_one(find_query, add_log_query)
+        else:
+            self.in_progress.update_one(find_query, update_status_query)
+            if log is not None:
+                self.in_progress.update_one(find_query, add_log_query)
 
     def __stringify_datetime_logs(self, logs):
         for log in logs:
