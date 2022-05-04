@@ -30,11 +30,6 @@ class JobDb:
         db = client.jobdb
         self.completed = db.completed
         self.in_progress = db.inprogress
-        # Creates an unique index on datasetName for inprogress collection
-        # if index not already present.
-        self.in_progress.create_index(
-            "datasetName", unique=True
-        )
 
     def get_job(self, job_id: str) -> dict:
         """

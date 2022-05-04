@@ -56,30 +56,30 @@ class MockedJobsCollection:
 
     def update_one(self, find_query, update_query, upsert=False):
         if find_query.get('datasetName') == 'MY_DATASET':
-            return UpdateResult({}, acknowledged=True)
+            return UpdateResult({"upserted": None}, acknowledged=True)
         else:
             return UpdateResult(
                 {"upserted": "mocked_upserted_id"},
                 acknowledged=True
             )
 
-    def delete_one(query):
+    def delete_one(self, query):
         ...
 
-    def insert_one(document):
+    def insert_one(self, document):
         ...
 
 
 @pytest.fixture(autouse=True)
 def mock_mongo_client(mocker):
     mocker.patch.object(
-        JobDb, '__init__', return_value=None
-    )
-    mocker.patch.object(
         JobDb, 'in_progress', MockedJobsCollection("in_progress")
     )
     mocker.patch.object(
         JobDb, 'completed', MockedJobsCollection("completed")
+    )
+    mocker.patch.object(
+        JobDb, '__init__', return_value=None
     )
 
 
@@ -100,10 +100,12 @@ def test_get_jobs():
 
 def test_new_job():
     job_db = JobDb()
-    assert job_db.new_job('ADD_DATA', 'queued', 'NEW_DATASET') is not None
+    assert job_db.new_job(
+        'ADD_OR_CHANGE_DATA', 'queued', 'NEW_DATASET'
+    ) is not None
 
     with pytest.raises(JobExistsException) as e:
-        job_db.new_job('ADD_DATA', 'queued', 'MY_DATASET')
+        job_db.new_job('ADD_OR_CHANGE_DATA', 'queued', 'MY_DATASET')
     assert "MY_DATASET already in progress" in str(e)
 
 
