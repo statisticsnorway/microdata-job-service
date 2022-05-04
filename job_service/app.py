@@ -7,7 +7,7 @@ from flask import Flask
 from job_service.api.job_api import job_api
 from job_service.api.file_api import file_api
 from job_service.exceptions.exceptions import (
-    NotFoundException, BadRequestException
+    JobExistsException, NotFoundException, BadRequestException
 )
 from job_service.config.logging import (
     CustomJSONLog, CustomJSONRequestLogFormatter
@@ -39,4 +39,9 @@ def handle_not_found(e):
 
 @app.errorhandler(BadRequestException)
 def handle_bad_request(e):
+    return {"message": str(e)}, 400
+
+
+@app.errorhandler(JobExistsException)
+def handle_job_exists(e):
     return {"message": str(e)}, 400

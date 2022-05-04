@@ -4,6 +4,7 @@ from datetime import datetime
 
 from pymongo import MongoClient
 from pymongo.results import UpdateResult
+from pymongo.errors import DuplicateKeyError
 
 from job_service.exceptions.exceptions import (
     JobExistsException, NotFoundException
@@ -23,11 +24,17 @@ class JobDb:
         client = MongoClient(
             MONGODB_URL,
             username=MONGODB_USER,
-            password=MONGODB_PASSWORD
+            password=MONGODB_PASSWORD,
+            authSource="admin"
         )
         db = client.jobdb
         self.completed = db.completed
-        self.in_progress = db.inProgress
+        self.in_progress = db.inprogress
+        # Creates an unique index on datasetName for inprogress collection
+        # if index not already present.
+        self.in_progress.create_index(
+            "datasetName", unique=True
+        )
 
     def get_job(self, job_id: str) -> dict:
         """
@@ -76,7 +83,7 @@ class JobDb:
             "status": status,
             "createdAt": now,
             "logs": [
-                {"at": now, "message": "Set status: {status}"}
+                {"at": now, "message": f"Set status: {status}"}
             ]
         }
         if dataset_name is not None:
@@ -84,15 +91,19 @@ class JobDb:
         if log is not None:
             job["logs"].append({"at": now, "message": log})
 
-        if command == "ADD_DATA":
+        if command == "ADD_OR_CHANGE_DATA":
             # Atomic insert of new import job
             # Only inserts if no job is found for same datasetname
             # with a currently active status
-            update_result: UpdateResult = self.in_progress.update_one(
-                {"datasetName": dataset_name},
-                {"$setOnInsert": job},
-                upsert=True
-            )
+            update_result = None
+            try:
+                update_result: UpdateResult = self.in_progress.update_one(
+                    {"datasetName": dataset_name},
+                    {"$setOnInsert": job},
+                    upsert=True
+                )
+            except DuplicateKeyError:
+                raise JobExistsException(f"{dataset_name} already in progress")
 
             if update_result.upserted_id is None:
                 # Raise exception if active job already existed

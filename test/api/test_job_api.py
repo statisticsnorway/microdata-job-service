@@ -11,7 +11,7 @@ JOB_LIST = [
     {'job_id': 'abc-abc-abc-abc'}
 ]
 NEW_JOB_REQUEST = {
-    "command": "ADD_DATA",
+    "command": "ADD_OR_CHANGE_DATA",
     "datasetName": "SOME_DATASET",
     "status": "initiated"
 }
