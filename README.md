@@ -2,8 +2,22 @@
 Service for managing jobs in the microdata platform.
 
 
-## Contribute
+## Database
+This service is bundled with a instance of [mongodb run through docker](https://hub.docker.com/_/mongo), and uses two collections under the jobDb database:
+* completed: completed jobs
+* inprogress: jobs in progress. This collection has an unique index on the datasetName field. In other words there can only be one active import job for a given dataset at any given time.
 
+#### SETUP
+On initialization of the database log into the mongodb container, and enter the mongo shell:
+
+```mongo --username <USER> --password <PASSWORD> ```
+
+In the mongo shell create an index for the inprogress collection:
+```
+> use jobdb
+> db.inprogress.createIndex({"datasetName": 1}, {unique: true})
+```
+## Contribute
 
 ### Set up
 To work on this repository you need to install [poetry](https://python-poetry.org/docs/):
@@ -36,8 +50,8 @@ If you want to test the service completely in your local environment:
 * Set environmental variables on your system:
 MONGODB_URL=mongodb://localhost:27017/jobdb
 ```
-export MONGODB_USER=USER
-export MONGODB_PASSWORD=123
+export MONGODB_USER=USER \
+export MONGODB_PASSWORD=123 \
 export INPUT_DIR=test/resources/input_directory
 ```
 * Run application from root directory: ´´´poetry run gunicorn job_service.app:app´´´
