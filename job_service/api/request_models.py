@@ -7,9 +7,8 @@ from job_service.exceptions.exceptions import BadRequestException
 
 
 class CommandEnum(str, Enum):
-    ADD_DATASET = 'ADD_DATA'
-    DELETE_DATASET = 'REMOVE'
-    CHANGE_DATASET = 'CHANGE_DATA'
+    ADD_OR_CHANGE_DATA = 'ADD_OR_CHANGE_DATA'
+    REMOVE_DATASET = 'REMOVE'
     PATCH_METADATA = 'PATCH_METADATA'
     BUMP_VERSION = 'BUMP_VERSION'
     SET_STATUS = 'SET_STATUS'
@@ -20,6 +19,7 @@ class StatusEnum(str, Enum):
     INITIATED = 'initiated'
     VALIDATING = 'validating'
     TRANSFORMING = 'transforming'
+    ENRICHING = 'enriching'
     PSEUDONYMIZING = 'pseudonymizing'
     CONVERTING = 'converting'
     IMPORTING = 'importing'
@@ -35,10 +35,15 @@ class NewJobRequest(BaseModel, extra=Extra.forbid):
     @root_validator(skip_on_failure=True)
     def check_command_type(cls, values):
         command = values['command']
-        if command in ['ADD_DATA', 'CHANGE_DATA', 'REMOVE', 'PATCH_METADATA']:
+        if command in ['ADD_OR_CHANGE_DATA', 'REMOVE', 'PATCH_METADATA']:
             if values.get('datasetName') is None:
                 raise BadRequestException(
                     f'Must provide a datasetName when command is {command}.'
+                )
+        if command != 'ADD_OR_CHANGE_DATA':
+            if values.get('status') not in ['done', 'failed']:
+                raise BadRequestException(
+                    'Unable to set status of synchronous job to in progress'
                 )
         return values
 
