@@ -137,7 +137,6 @@ class JobDb:
             self.completed.update_one(find_query, update_status_query)
             if log is not None:
                 self.completed.update_one(find_query, add_log_query)
-            return
         else:
             self.in_progress.update_one(find_query, update_status_query)
             if log is not None:
