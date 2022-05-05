@@ -3,7 +3,7 @@ Service for managing jobs in the microdata platform.
 
 
 ## Database
-This service is bundled with a instance of [mongodb run through docker](https://hub.docker.com/_/mongo), and uses two collections under the jobDb database:
+This service is bundled with an instance of [mongodb run through docker](https://hub.docker.com/_/mongo), and uses two collections under the jobdb database:
 * completed: completed jobs
 * inprogress: jobs in progress. This collection has an unique index on the datasetName field. In other words there can only be one active import job for a given dataset at any given time.
 
