@@ -12,7 +12,9 @@ def test_get_files(flask_app):
         url_for("file_api.get_files")
     )
     assert response.status_code == 200
-    assert response.json == ["MY_DATASET", "OTHER_DATASET"]
+    assert response.json == [{'command': 'ADD_OR_CHANGE_DATA', 'datasetName': 'MY_DATASET'},
+                             {'command': 'PATCH_METADATA', 'datasetName': 'YOUR_DATASET'},
+                             {'command': 'ADD_OR_CHANGE_DATA', 'datasetName': 'OTHER_DATASET'}]
 
 
 def test_import_dataset_files(flask_app, mocker):
