@@ -56,6 +56,14 @@ export INPUT_DIR=test/resources/input_directory
 ```
 * Run application from root directory: ´´´poetry run gunicorn job_service.app:app´´´
 
+### Running on server
+Build the mongo image locally, tag it and push it to Nexus so it is available for Jenkins in secure zone:
+```
+docker pull mongo:5
+sudo docker tag mongo:5 nexus.ssb.no:8443/raird/mongo:latest
+sudo docker push nexus.ssb.no:8443/raird/mongo:latest
+```
+
 ## Built with
 * [Poetry](https://python-poetry.org/) - Python dependency and package management
 * [Gunicorn](https://gunicorn.org/) - Python WSGI-server for UNIX
