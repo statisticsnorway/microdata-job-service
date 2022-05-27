@@ -1,9 +1,11 @@
+import pytest
+from job_service.exceptions.exceptions import NoSuchImportableDataset
 from job_service.repository import local_storage
 
 expected_datasets = [
-    {'command': 'ADD_OR_CHANGE_DATA', 'datasetName': 'MY_DATASET'},
-    {'command': 'PATCH_METADATA', 'datasetName': 'YOUR_DATASET'},
-    {'command': 'ADD_OR_CHANGE_DATA', 'datasetName': 'OTHER_DATASET'}
+    {'operation': 'ADD_OR_CHANGE_DATA', 'datasetName': 'MY_DATASET'},
+    {'operation': 'PATCH_METADATA', 'datasetName': 'YOUR_DATASET'},
+    {'operation': 'ADD_OR_CHANGE_DATA', 'datasetName': 'OTHER_DATASET'}
 ]
 
 
@@ -14,14 +16,14 @@ def test_get_importable_datasets():
         assert dataset in actual_datasets
 
 
-def test_has_importable_dataset():
+def test_get_importable_dataset_operation():
     for dataset in expected_datasets:
-        has_dataset = local_storage.has_importable_dataset(
+        operation = local_storage.get_importable_dataset_operation(
             dataset['datasetName']
         )
-        assert has_dataset
+        assert operation == dataset['operation']
 
-    has_dataset, command = local_storage.has_importable_dataset(
-        'NON_EXISTING_DATASET'
-    )
-    assert (False, None) == (has_dataset, command)
+    with pytest.raises(NoSuchImportableDataset):
+        local_storage.get_importable_dataset_operation(
+            'NON_EXISTING_DATASET'
+        )
