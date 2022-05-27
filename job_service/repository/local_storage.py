@@ -7,13 +7,13 @@ from job_service.api.request_models import CommandEnum
 INPUT_DIR = os.environ['INPUT_DIR']
 
 
-def get_input_datasets() -> list[str]:
+def get_importable_datasets() -> list[str]:
     """
     Returns names of all valid datasets in input directory.
     """
     valid_datasets = []
     for dataset_name in os.listdir(INPUT_DIR):
-        has_dataset, command = has_input_dataset(dataset_name)
+        has_dataset, command = has_importable_dataset(dataset_name)
         if has_dataset:
             valid_datasets.append(
                 {"datasetName": dataset_name, "command": command}
@@ -21,7 +21,7 @@ def get_input_datasets() -> list[str]:
     return valid_datasets
 
 
-def has_input_dataset(dataset_name) -> Tuple[bool, str]:
+def has_importable_dataset(dataset_name) -> Tuple[bool, str]:
     """
     Returns true if dataset with dataset_name exists in input directory,
     and false if not.
