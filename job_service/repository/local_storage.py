@@ -1,8 +1,7 @@
 import os
 
-from typing import Tuple
-
-from job_service.api.request_models import CommandEnum
+from job_service.exceptions.exceptions import NoSuchImportableDataset
+from job_service.api.request_models import OperationEnum
 
 INPUT_DIR = os.environ['INPUT_DIR']
 
@@ -13,18 +12,23 @@ def get_importable_datasets() -> list[str]:
     """
     valid_datasets = []
     for dataset_name in os.listdir(INPUT_DIR):
-        has_dataset, command = has_importable_dataset(dataset_name)
-        if has_dataset:
+        try:
+            operation = get_importable_dataset_operation(dataset_name)
             valid_datasets.append(
-                {"datasetName": dataset_name, "command": command}
+                {"datasetName": dataset_name, "operation": operation}
             )
+        except NoSuchImportableDataset:
+            continue
     return valid_datasets
 
 
-def has_importable_dataset(dataset_name) -> Tuple[bool, str]:
+def get_importable_dataset_operation(dataset_name) -> str:
     """
-    Returns true if dataset with dataset_name exists in input directory,
-    and false if not.
+    Returns the operation of the importable dataset. PATCH_METADATA
+    if only .json file exists, and ADD_OR_CHANGE_DATA if both
+    .csv file and .json file exists.
+    Raises a NoSuchImportableDataset error if importable dataset
+    does not exist.
     """
     csv_file_exists = os.path.exists(
         f'{INPUT_DIR}/{dataset_name}/{dataset_name}.csv'
@@ -34,10 +38,10 @@ def has_importable_dataset(dataset_name) -> Tuple[bool, str]:
     )
 
     if csv_file_exists and json_file_exists:
-        command = CommandEnum.ADD_OR_CHANGE_DATA.value
+        return OperationEnum.ADD_OR_CHANGE_DATA.value
     elif json_file_exists:
-        command = CommandEnum.PATCH_METADATA.value
+        return OperationEnum.PATCH_METADATA.value
     else:
-        command = None
-
-    return (csv_file_exists and json_file_exists) or json_file_exists, command
+        raise NoSuchImportableDataset(
+            f'{dataset_name} does not exist in the input directory'
+        )
