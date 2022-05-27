@@ -35,7 +35,7 @@ def get_job(job_id: str):
 @validate()
 def new_job(body: NewJobRequest):
     logger.info(f'POST /jobs with request body: {body}')
-    job_id = db.new_job(body.command, body.status, body.datasetName)
+    job_id = db.new_job(body.operation, body.status, body.datasetName)
     return {"jobId": job_id}
 
 

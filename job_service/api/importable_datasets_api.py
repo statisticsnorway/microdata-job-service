@@ -4,7 +4,9 @@ from flask import Blueprint, jsonify
 from flask_pydantic import validate
 
 from job_service.api.request_models import ImportRequest
-from job_service.exceptions.exceptions import JobExistsException
+from job_service.exceptions.exceptions import (
+    JobExistsException, NoSuchImportableDataset
+)
 from job_service.repository.job_db import JobDb
 from job_service.repository import local_storage
 
@@ -24,21 +26,17 @@ def get_importable_datasets():
 @importable_datasets_api.route('/importable-datasets', methods=['POST'])
 @validate()
 def import_datasets(body: ImportRequest):
-    logger.info(f'POST /importable-datasets/import with request body {body}')
+    logger.info(f'POST /importable-datasets with request body {body}')
     response = []
-    existing_datasets = []
-    for dataset_name in body.datasetList:
-        if not local_storage.has_importable_dataset(dataset_name):
-            response.append({
-                "status": "ERROR",
-                "dataset": dataset_name,
-                "message": "Importable datasets not available"
-            })
-        else:
-            existing_datasets.append(dataset_name)
-    for dataset_name in existing_datasets:
+    for dataset in body.importableDatasets:
+        dataset_name = dataset.datasetName
+        dataset_operation = dataset.operation
         try:
-            job_id = db.new_job('ADD_DATA', 'queued', dataset_name)
+            operation = local_storage.get_importable_dataset_operation(
+                dataset_name
+            )
+            assert dataset_operation == operation
+            job_id = db.new_job(operation, 'queued', dataset_name)
             response.append({
                 "status": "OK",
                 "dataset": dataset_name,
@@ -49,5 +47,18 @@ def import_datasets(body: ImportRequest):
                 "status": "ERROR",
                 "dataset": dataset_name,
                 "message": str(e)
+            })
+        except NoSuchImportableDataset as e:
+            response.append({
+                "status": "ERROR",
+                "dataset": dataset_name,
+                "message": str(e)
+            })
+        except Exception as e:
+            logger.error(f"Unexpected error when importing dataset: {str(e)}")
+            response.append({
+                "status": "ERROR",
+                "dataset": dataset_name,
+                "message": "Unexpected error when importing dataset"
             })
     return jsonify(response)
