@@ -35,7 +35,9 @@ class NewJobRequest(BaseModel, extra=Extra.forbid):
     @root_validator(skip_on_failure=True)
     def check_command_type(cls, values):
         operation = values['operation']
-        if operation in ['SET_STATUS', 'ADD_OR_CHANGE_DATA', 'PATCH_METADATA']:
+        if operation in [
+            'SET_STATUS', 'ADD_OR_CHANGE_DATA', 'PATCH_METADATA', 'REMOVE'
+        ]:
             if values.get('datasetName') is None:
                 raise BadRequestException(
                     'Must provide a datasetName when '
