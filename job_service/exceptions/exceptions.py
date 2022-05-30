@@ -8,3 +8,7 @@ class BadRequestException(Exception):
 
 class JobExistsException(Exception):
     pass
+
+
+class NoSuchImportableDataset(Exception):
+    pass

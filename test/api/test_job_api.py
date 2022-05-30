@@ -11,7 +11,7 @@ JOB_LIST = [
     {'job_id': 'abc-abc-abc-abc'}
 ]
 NEW_JOB_REQUEST = {
-    "command": "ADD_OR_CHANGE_DATA",
+    "operation": "ADD_OR_CHANGE_DATA",
     "datasetName": "SOME_DATASET",
     "status": "initiated"
 }
@@ -82,7 +82,7 @@ def test_new_job(flask_app, mocker):
     )
     new_job.assert_called_once()
     new_job.assert_called_with(
-        NEW_JOB_REQUEST['command'],
+        NEW_JOB_REQUEST['operation'],
         NEW_JOB_REQUEST['status'],
         NEW_JOB_REQUEST['datasetName']
     )

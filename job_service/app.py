@@ -5,7 +5,7 @@ import json_logging
 from flask import Flask
 
 from job_service.api.job_api import job_api
-from job_service.api.file_api import file_api
+from job_service.api.importable_datasets_api import importable_datasets_api
 from job_service.exceptions.exceptions import (
     JobExistsException, NotFoundException, BadRequestException
 )
@@ -29,7 +29,7 @@ logging.getLogger("json_logging").setLevel(logging.WARNING)
 
 app = Flask(__name__)
 app.register_blueprint(job_api)
-app.register_blueprint(file_api)
+app.register_blueprint(importable_datasets_api)
 
 
 @app.errorhandler(NotFoundException)
