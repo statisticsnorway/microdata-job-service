@@ -47,7 +47,6 @@ _____
 >  |   500  |```{"message": "<Error message>"}```    |
 >
 ></details>
-><details>
 _____
 > ### **[POST]** `/jobs`
 >Post new jobs
@@ -67,7 +66,6 @@ _____
 >  |   500  |```{"message": "<Error message>"}```                                                         |
 >
 ></details>
-
 _____
 > ### **[PUT]** `/jobs`
 >Update an existing job with a new description or a change of status.
@@ -94,7 +92,6 @@ _____
 >  |   500  |```{"message": "<Error message>"}```    |
 >
 ></details>
-
 _____
 > ### **[GET]** `/jobs`
 >Get information about the importable datasets in the input directory.
