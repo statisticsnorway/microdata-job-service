@@ -22,7 +22,6 @@ Service for managing jobs in the microdata platform.
 >
 ></details>
 ><details>
-><details>
 >  <summary>Query Parameters</summary>
 >
 >  * **status** - filter on job status
