@@ -2,9 +2,10 @@ import os
 from typing import List
 
 from job_service.model.request import ImportableDataset
+from job_service.config import environment
 
 
-INPUT_DIR = os.environ['INPUT_DIR']
+INPUT_DIR = environment.get('INPUT_DIR')
 
 
 def get_importable_datasets() -> List[ImportableDataset]:

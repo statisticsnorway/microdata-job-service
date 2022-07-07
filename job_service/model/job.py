@@ -1,7 +1,7 @@
 from typing import List, Optional, Union
 
 from pydantic import Extra, ValidationError, root_validator
-from job_service.api.request_models import Operation
+from job_service.model.request import Operation
 
 from job_service.model.camelcase_model import CamelModel
 from job_service.model.enum import JobStatus, ReleaseStatus

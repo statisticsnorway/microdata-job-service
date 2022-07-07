@@ -1,4 +1,3 @@
-import os
 from typing import List
 import uuid
 from datetime import datetime
@@ -6,22 +5,22 @@ from datetime import datetime
 from pymongo import MongoClient
 from pymongo.results import UpdateResult
 from pymongo.errors import DuplicateKeyError
-from job_service.model.request import GetJobRequest
-
-from job_service.exceptions.exceptions import (
+from job_service.model.request import GetJobRequest, UpdateJobRequest
+from job_service.config import environment
+from job_service.exceptions import (
     JobExistsException, NotFoundException
 )
 from job_service.model.job import Job
 
 
-MONGODB_URL = os.environ["MONGODB_URL"]
-MONGODB_USER = os.environ["MONGODB_USER"]
-MONGODB_PASSWORD = os.environ["MONGODB_PASSWORD"]
+MONGODB_URL = environment.get('MONGODB_URL')
+MONGODB_USER = environment.get('MONGODB_USER')
+MONGODB_PASSWORD = environment.get('MONGODB_PASSWORD')
 client = MongoClient(
     MONGODB_URL,
     username=MONGODB_USER,
     password=MONGODB_PASSWORD,
-    authSource="admin"
+    authSource='admin'
 )
 db = client.jobdb
 completed = db.completed
@@ -112,7 +111,7 @@ def new_job(
         return job_id
 
 
-def update_job(job_id: str, status: str, log: str = None) -> None:
+def update_job(job_id: str, body: UpdateJobRequest) -> None:
     """
     Updates job with supplied job_id with new status.
     Appends additional log if supplied.
@@ -120,29 +119,32 @@ def update_job(job_id: str, status: str, log: str = None) -> None:
     now = datetime.now()
     find_query = {"jobId": job_id}
     update_status_query = {
-        "$set": {"status": status},
+        "$set": {"status": body.status},
         "$push": {
-            "log": {"at": now, "message": f"Set status: {status}"}
+            "log": {
+                "at": now,
+                "message": f"Set status: {body.status}"
+            }
         }
     }
     add_log_query = {
         "$push": {
-            "logs": {"at": now, "message": log}
+            "logs": {"at": now, "message": body.log}
         }
     }
     job = in_progress.find_one(find_query)
     if job is None:
         raise NotFoundException(f"Could not find job with id {job_id}")
 
-    if status in ["done", "failed"]:
+    if body.status in ["done", "failed"]:
         in_progress.delete_one(find_query)
         completed.insert_one(job)
         completed.update_one(find_query, update_status_query)
-        if log is not None:
+        if body.log is not None:
             completed.update_one(find_query, add_log_query)
     else:
         in_progress.update_one(find_query, update_status_query)
-        if log is not None:
+        if body.log is not None:
             in_progress.update_one(find_query, add_log_query)
 
 

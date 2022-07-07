@@ -6,7 +6,7 @@ from flask import Flask
 
 from job_service.api.job_api import job_api
 from job_service.api.importable_datasets_api import importable_datasets_api
-from job_service.exceptions.exceptions import (
+from job_service.exceptions import (
     JobExistsException, NotFoundException, BadRequestException
 )
 from job_service.config.logging import (

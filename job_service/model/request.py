@@ -1,43 +1,60 @@
 from typing import List, Optional
 
-from pydantic import BaseModel, Extra, ValidationError, root_validator
+from pydantic import Extra, root_validator
 
-from job_service.exceptions.exceptions import BadRequestException
+from job_service.exceptions import BadQueryException, BadRequestException
 from job_service.model.camelcase_model import CamelModel
-from job_service.model.enum import JobStatus, Operation
+from job_service.model.enum import JobStatus, Operation, ReleaseStatus
+from job_service.model.job import DatastoreVersion
 
 
-class NewJobRequest(BaseModel, extra=Extra.forbid):
+class NewJobRequest(CamelModel, extra=Extra.forbid):
     operation: Operation
-    status: JobStatus
+    releaseStatus: ReleaseStatus
     datasetName: Optional[str]
+    description: Optional[str]
+    bumpManifesto: Optional[DatastoreVersion]
 
     @root_validator(skip_on_failure=True)
     def check_command_type(cls, values):
         operation = values['operation']
         if operation in [
-            'SET_STATUS', 'ADD', 'CHANGE_DATA', 'PATCH_METADATA', 'REMOVE'
+            'SET_STATUS', 'ADD', 'CHANGE_DATA',
+            'PATCH_METADATA', 'REMOVE', 'DELETE_DRAFT'
         ]:
             if values.get('datasetName') is None:
                 raise BadRequestException(
                     'Must provide a datasetName when '
                     f'operation is {operation}.'
                 )
-        if operation not in ['PATCH_METADATA', 'ADD', 'CHANGE_DATA']:
-            if values.get('status') not in ['done', 'failed']:
+        if operation in ['REMOVE', 'BUMP']:
+            if values.get('description') is None:
                 raise BadRequestException(
-                    'Unable to set status of synchronous job to in progress'
+                    'Must provide a description when '
+                    f'operation is {operation}.'
+                )
+        if operation == 'SET_STATUS':
+            if values.get('releaseStatus') is None:
+                raise BadRequestException(
+                    'Must provide a releaseStatus when '
+                    f'operation is {operation}.'
+                )
+        if operation == 'BUMP':
+            if values.get('bumpManifesto') is None:
+                raise BadRequestException(
+                    'Must provide a bumpManifesto when '
+                    f'operation is {operation}.'
                 )
         return values
 
 
-class UpdateJobRequest(BaseModel, extra=Extra.forbid):
+class UpdateJobRequest(CamelModel, extra=Extra.forbid):
     status: Optional[JobStatus]
     description: Optional[str]
     log: Optional[str]
 
 
-class GetJobRequest(BaseModel, extra=Extra.forbid):
+class GetJobRequest(CamelModel, extra=Extra.forbid):
     status: Optional[JobStatus]
     operation: Optional[List[Operation]]
     ignoreCompleted: Optional[bool] = False
@@ -48,7 +65,7 @@ class GetJobRequest(BaseModel, extra=Extra.forbid):
             values.get('status', None) is None and
             values.get('operation', None) is None
         ):
-            raise ValidationError(
+            raise BadRequestException(
                 'Query must include either "status" or "operation"'
             )
         operation_list = None
@@ -77,7 +94,9 @@ class GetJobRequest(BaseModel, extra=Extra.forbid):
         elif len(conditions) == 2:
             return {"$and": conditions}
         else:
-            raise Exception()
+            raise BadQueryException(
+                'Unable to transform GetJobRequest to Mongo query'
+            )
 
 
 class ImportableDataset(CamelModel, extra=Extra.forbid):
