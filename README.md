@@ -92,7 +92,7 @@ _____
 >
 ></details>
 _____
-> ### **[GET]** `/jobs`
+> ### **[GET]** `/importable-datasets`
 >Get information about the importable datasets in the input directory.
 ><details>
 >  <summary>Example request</summary>
