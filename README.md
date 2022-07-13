@@ -178,4 +178,4 @@ sudo docker push nexus.ssb.no:8443/raird/mongo:latest
 * [Poetry](https://python-poetry.org/) - Python dependency and package management
 * [Gunicorn](https://gunicorn.org/) - Python WSGI-server for UNIX
 * [Flask](https://flask.palletsprojects.com) - Web framework
-* [Pydantic]
+* [Pydantic](https://pydantic-docs.helpmanual.io/) - Data validation
