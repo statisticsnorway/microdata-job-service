@@ -4,29 +4,20 @@ from pydantic import Extra, root_validator
 
 from job_service.exceptions import BadQueryException, BadRequestException
 from job_service.model.camelcase_model import CamelModel
-from job_service.model.enum import JobStatus, Operation, ReleaseStatus
-from job_service.model.job import DatastoreVersion
+from job_service.model.enums import JobStatus, Operation, ReleaseStatus
+from job_service.model.job import DatastoreVersion, Job, JobParameters
 
 
 class NewJobRequest(CamelModel, extra=Extra.forbid):
     operation: Operation
-    releaseStatus: ReleaseStatus
-    datasetName: Optional[str]
+    target: str
+    release_status: Optional[ReleaseStatus]
     description: Optional[str]
-    bumpManifesto: Optional[DatastoreVersion]
+    bump_manifesto: Optional[DatastoreVersion]
 
     @root_validator(skip_on_failure=True)
-    def check_command_type(cls, values):
+    def check_command_type(cls, values):  # pylint: disable=no-self-argument
         operation = values['operation']
-        if operation in [
-            'SET_STATUS', 'ADD', 'CHANGE_DATA',
-            'PATCH_METADATA', 'REMOVE', 'DELETE_DRAFT'
-        ]:
-            if values.get('datasetName') is None:
-                raise BadRequestException(
-                    'Must provide a datasetName when '
-                    f'operation is {operation}.'
-                )
         if operation in ['REMOVE', 'BUMP']:
             if values.get('description') is None:
                 raise BadRequestException(
@@ -47,6 +38,41 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
                 )
         return values
 
+    def generate_job_from_request(self, job_id: str) -> Job:
+        if self.operation == 'SET_STATUS':
+            job_parameters = JobParameters(
+                operation=self.operation,
+                release_status=self.release_status,
+                target=self.target
+            )
+        elif self.operation == 'REMOVE':
+            job_parameters = JobParameters(
+                operation=self.operation,
+                description=self.description,
+                target=self.target
+            )
+        elif self.operation == 'BUMP':
+            job_parameters = JobParameters(
+                operation=self.operation,
+                bump_manifesto=self.bump_manifesto,
+                description=self.description,
+                target=self.target
+            )
+        else:
+            job_parameters = JobParameters(
+                target=self.target,
+                operation=self.operation
+            )
+        return Job(
+            job_id=job_id,
+            status='queued',
+            parameters=job_parameters
+        )
+
+
+class NewJobsRequest(CamelModel, extra=Extra.forbid):
+    jobs: List[NewJobRequest]
+
 
 class UpdateJobRequest(CamelModel, extra=Extra.forbid):
     status: Optional[JobStatus]
@@ -60,7 +86,7 @@ class GetJobRequest(CamelModel, extra=Extra.forbid):
     ignoreCompleted: Optional[bool] = False
 
     @root_validator(pre=True, skip_on_failure=True)
-    def validate_query(cls, values):
+    def validate_query(cls, values):  # pylint: disable=no-self-argument
         if (
             values.get('status', None) is None and
             values.get('operation', None) is None
@@ -97,9 +123,3 @@ class GetJobRequest(CamelModel, extra=Extra.forbid):
             raise BadQueryException(
                 'Unable to transform GetJobRequest to Mongo query'
             )
-
-
-class ImportableDataset(CamelModel, extra=Extra.forbid):
-    datasetName: str
-    hasMetadata: str
-    hasData: str
