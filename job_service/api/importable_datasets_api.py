@@ -14,4 +14,4 @@ importable_datasets_api = Blueprint('importable_datasets_api', __name__)
 def get_importable_datasets():
     logger.info('GET /importable-datasets')
     datasets = local_storage.get_importable_datasets()
-    return jsonify([dataset.dict() for dataset in datasets])
+    return jsonify([dataset.dict(by_alias=True) for dataset in datasets])
