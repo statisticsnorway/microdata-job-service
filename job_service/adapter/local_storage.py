@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from job_service.model.request import ImportableDataset
+from job_service.model.importable_dataset import ImportableDataset
 from job_service.config import environment
 
 
