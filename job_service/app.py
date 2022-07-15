@@ -45,3 +45,8 @@ def handle_bad_request(e):
 @app.errorhandler(JobExistsException)
 def handle_job_exists(e):
     return {"message": str(e)}, 400
+
+
+@app.errorhandler(Exception)
+def handle_unknown_error(e):
+    return {"message": "Internal Server Error"}, 500
