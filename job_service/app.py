@@ -25,7 +25,8 @@ def init_json_logging():
     )
 
 
-logging.getLogger("json_logging").setLevel(logging.WARNING)
+logger = logging.getLogger("json_logging")
+
 
 app = Flask(__name__)
 app.register_blueprint(job_api)
@@ -34,19 +35,23 @@ app.register_blueprint(importable_datasets_api)
 
 @app.errorhandler(NotFoundException)
 def handle_not_found(e):
+    logger.error(f'ERROR: {e}')
     return {"message": str(e)}, 404
 
 
 @app.errorhandler(BadRequestException)
 def handle_bad_request(e):
+    logger.error(f'ERROR: {e}')
     return {"message": str(e)}, 400
 
 
 @app.errorhandler(JobExistsException)
 def handle_job_exists(e):
+    logger.error(f'ERROR: {e}')
     return {"message": str(e)}, 400
 
 
 @app.errorhandler(Exception)
-def handle_unknown_error(e):  # pylint: disable=unused-argument
+def handle_unknown_error(e):
+    logger.error(f'ERROR: {e}')
     return {"message": "Internal Server Error"}, 500

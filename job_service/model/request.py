@@ -80,7 +80,7 @@ class UpdateJobRequest(CamelModel, extra=Extra.forbid):
     log: Optional[str]
 
 
-class GetJobRequest(CamelModel, extra=Extra.forbid):
+class GetJobRequest(CamelModel, extra=Extra.forbid, use_enum_values=True):
     status: Optional[JobStatus]
     operation: Optional[List[Operation]]
     ignoreCompleted: Optional[bool] = False
@@ -109,14 +109,14 @@ class GetJobRequest(CamelModel, extra=Extra.forbid):
                 None if self.status is None
                 else {"status": self.status}),
             (
-                None if self.status is None
-                else {"operation": {"$in": self.operation}})
+                None if self.operation is None
+                else {"parameters.operation": {"$in": self.operation}})
         ]
         conditions = [
             condition for condition in conditions if condition is not None
         ]
         if len(conditions) == 1:
-            return conditions[1]
+            return conditions[0]
         elif len(conditions) == 2:
             return {"$and": conditions}
         else:

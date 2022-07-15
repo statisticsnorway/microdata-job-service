@@ -1,7 +1,7 @@
 from typing import List
 import uuid
 from datetime import datetime
-
+import logging
 import pymongo
 from pymongo.results import UpdateResult
 from pymongo.errors import DuplicateKeyError
@@ -25,9 +25,12 @@ client = pymongo.MongoClient(
     password=MONGODB_PASSWORD,
     authSource='admin'
 )
-db = client.jobdb
+db = client.jobDB
 completed = db.completed
 in_progress = db.inprogress
+
+
+logger = logging.getLogger("json_logging")
 
 
 def get_job(job_id: str) -> Job:
@@ -50,6 +53,7 @@ def get_jobs(query: GetJobRequest) -> List[Job]:
     Returns list of jobs with matching status from database.
     """
     find_query = query.to_mongo_query()
+    logger.info(str(find_query))
     jobs = list(in_progress.find(find_query))
     if not query.ignoreCompleted:
         jobs = jobs + list(completed.find(find_query))
@@ -65,17 +69,23 @@ def new_job(new_job_request: NewJobRequest) -> str:
     job_id = str(uuid.uuid4())
     job = new_job_request.generate_job_from_request(job_id)
     update_result = None
+    logger.info(f'inserting new job {job}')
     try:
         update_result: UpdateResult = in_progress.update_one(
             {"target": job.parameters.target},
-            {"$setOnInsert": job},
+            {"$setOnInsert": job.dict(by_alias=True)},
             upsert=True
         )
-    except DuplicateKeyError:
+    except DuplicateKeyError as e:
+        logger.error(str(e))
         raise JobExistsException(  # pylint: disable=raise-missing-from
             f'Job with target {job.target} already in progress'
         )
+    except Exception as e:
+        logger.error(str(e))
+        raise e
     if update_result.upserted_id is None:
+        logger.error(f'Job with target {job.target} already in progress')
         raise JobExistsException(
             f'Job with target {job.target} already in progress'
         )
