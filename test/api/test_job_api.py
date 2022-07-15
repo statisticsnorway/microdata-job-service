@@ -9,6 +9,7 @@ from job_service.model.request import (
 
 
 NOT_FOUND_MESSAGE = 'not found'
+JOB_ID = '123-123-123-123'
 JOB_LIST = [
     Job(
         job_id='123-123-123-123',
@@ -34,7 +35,10 @@ NEW_JOB_REQUEST = {
         {'operation': 'CHANGE_DATA', 'target': 'OTHER_DATASET'}
     ]
 }
-
+UPDATE_JOB_REQUEST = {
+    'status': 'initiated',
+    'log': 'extra logging'
+}
 
 def test_get_jobs(flask_app, mocker):
     get_jobs = mocker.patch.object(
@@ -53,7 +57,6 @@ def test_get_jobs(flask_app, mocker):
 
 
 def test_get_job(flask_app, mocker):
-    JOB_ID = '123-123-123-123'
     get_job = mocker.patch.object(
         job_db, 'get_job', return_value=JOB_LIST[0]
     )
@@ -67,7 +70,6 @@ def test_get_job(flask_app, mocker):
 
 
 def test_get_job_not_found(flask_app, mocker):
-    JOB_ID = '123'
     get_job = mocker.patch.object(
         job_db, 'get_job', side_effect=NotFoundException(NOT_FOUND_MESSAGE)
     )
@@ -81,7 +83,6 @@ def test_get_job_not_found(flask_app, mocker):
 
 
 def test_new_job(flask_app, mocker):
-    JOB_ID = '123'
     new_job = mocker.patch.object(
         job_db, 'new_job', return_value=JOB_ID
     )
@@ -104,11 +105,6 @@ def test_new_job(flask_app, mocker):
 
 
 def test_update_job(flask_app, mocker):
-    JOB_ID = '123-123-123-123'
-    UPDATE_JOB_REQUEST = {
-        'status': 'initiated',
-        'log': 'extra logging'
-    }
     update_job = mocker.patch.object(
         job_db, 'update_job', return_value=JOB_ID
     )
@@ -126,7 +122,6 @@ def test_update_job(flask_app, mocker):
 
 
 def test_update_job_bad_request(flask_app):
-    JOB_ID = '123-123-123-123'
     response = flask_app.put(
         url_for('job_api.update_job', job_id=JOB_ID),
         json={"status": "no-such-status"}
