@@ -40,6 +40,7 @@ UPDATE_JOB_REQUEST = {
     'log': 'extra logging'
 }
 
+
 def test_get_jobs(flask_app, mocker):
     get_jobs = mocker.patch.object(
         job_db, 'get_jobs', return_value=JOB_LIST

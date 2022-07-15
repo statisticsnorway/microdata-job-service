@@ -48,5 +48,5 @@ def handle_job_exists(e):
 
 
 @app.errorhandler(Exception)
-def handle_unknown_error(e):
+def handle_unknown_error(e):  # pylint: disable=unused-argument
     return {"message": "Internal Server Error"}, 500
