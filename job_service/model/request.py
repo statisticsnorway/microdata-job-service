@@ -25,13 +25,13 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
                     f'operation is {operation}.'
                 )
         if operation == 'SET_STATUS':
-            if values.get('releaseStatus') is None:
+            if values.get('release_status') is None:
                 raise BadRequestException(
                     'Must provide a releaseStatus when '
                     f'operation is {operation}.'
                 )
         if operation == 'BUMP':
-            if values.get('bumpManifesto') is None:
+            if values.get('bump_manifesto') is None:
                 raise BadRequestException(
                     'Must provide a bumpManifesto when '
                     f'operation is {operation}.'
@@ -87,19 +87,12 @@ class GetJobRequest(CamelModel, extra=Extra.forbid, use_enum_values=True):
 
     @root_validator(pre=True, skip_on_failure=True)
     def validate_query(cls, values):  # pylint: disable=no-self-argument
-        if (
-            values.get('status', None) is None and
-            values.get('operation', None) is None
-        ):
-            raise BadRequestException(
-                'Query must include either "status" or "operation"'
-            )
-        operation_list = None
-        if values.get('operation', None) is not None:
-            operation_list = values['operation'][0].split(',')
         return {
             'status': values.get('status', None),
-            'operation': operation_list,
+            'operation': (
+                None if values.get('operation') is None
+                else values.get('operation')[0].split(',')
+            ),
             'ignoreCompleted': values.get('ignoreCompleted', False)
         }
 
@@ -107,14 +100,18 @@ class GetJobRequest(CamelModel, extra=Extra.forbid, use_enum_values=True):
         conditions = [
             (
                 None if self.status is None
-                else {"status": self.status}),
+                else {"status": self.status}
+            ),
             (
                 None if self.operation is None
-                else {"parameters.operation": {"$in": self.operation}})
+                else {"parameters.operation": {"$in": self.operation}}
+            )
         ]
         conditions = [
             condition for condition in conditions if condition is not None
         ]
+        if len(conditions) == 0:
+            return {}
         if len(conditions) == 1:
             return conditions[0]
         elif len(conditions) == 2:

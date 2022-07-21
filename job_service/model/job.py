@@ -1,11 +1,10 @@
 import datetime
 from typing import List, Optional, Union
 
-from pydantic import Extra, ValidationError, root_validator
-from job_service.model.request import Operation
+from pydantic import Extra, root_validator
 
 from job_service.model.camelcase_model import CamelModel
-from job_service.model.enums import JobStatus, ReleaseStatus
+from job_service.model.enums import JobStatus, ReleaseStatus, Operation
 
 
 class DataStructureUpdate(CamelModel, extra=Extra.forbid):
@@ -27,39 +26,43 @@ class DatastoreVersion(CamelModel):
 class JobParameters(CamelModel, use_enum_values=True):
     operation: Operation
     target: str
-    bump_manifesto: Optional[dict]
+    bump_manifesto: Optional[DatastoreVersion]
     description: Optional[str]
     release_status: Optional[ReleaseStatus]
 
     @root_validator(skip_on_failure=True)
     @classmethod
     def validate_job_type(cls, values):
-        operation: Operation = values['operation']
+        operation: Operation = values.get('operation')
         if (
             operation == Operation.BUMP
             and (
-                values['bump_manifesto'] is None or
-                values['description'] is None
+                values.get('bump_manifesto') is None or
+                values.get('description') is None
             )
         ):
-            raise ValidationError(
+            raise ValueError(
                 'No supplied bump manifesto for BUMP operation'
             )
-        if (
+        elif (
             operation == Operation.REMOVE
-            and values['descripton'] is None
+            and values.get('description') is None
         ):
-            raise ValidationError(
+            raise ValueError(
                 'Missing parameters for REMOVE operation'
             )
-        if (
+        elif (
             operation == Operation.SET_STATUS
-            and values['release_status'] is None
+            and values.get('release_status') is None
         ):
-            raise ValidationError(
+            raise ValueError(
                 'Missing parameters for SET STATUS operation'
             )
-        return values
+        else:
+            return {
+                key: value for key, value in values.items()
+                if value is not None
+            }
 
 
 class Log(CamelModel, extra=Extra.forbid):
@@ -74,13 +77,13 @@ class Job(CamelModel, use_enum_values=True):
     job_id: str
     status: JobStatus
     parameters: JobParameters
-    logs: Optional[List[Log]] = []
+    log: Optional[List[Log]] = []
 
     @root_validator(skip_on_failure=True)
     @classmethod
     def validate_job_type(cls, values):
-        if values['logs'] is None:
-            values['logs'] = [{
+        if values['log'] is None:
+            values['log'] = [{
                 'at': datetime.datetime.now(),
                 'message': 'Job generated and queued'
             }]
