@@ -99,31 +99,38 @@ def update_job(job_id: str, body: UpdateJobRequest) -> None:
     """
     now = datetime.now()
     find_query = {"jobId": job_id}
-    update_status_query = {
-        "$set": {"status": body.status},
-        "$push": {
-            "log": {
-                "at": now,
-                "message": f"Set status: {body.status}"
-            }
-        }
-    }
-    add_log_query = {
-        "$push": {
-            "logs": {"at": now, "message": body.log}
-        }
-    }
     job = in_progress.find_one(find_query)
     if job is None:
         raise NotFoundException(f"Could not find job with id {job_id}")
 
+    update_query = {
+        "$set": {},
+        "$push": {
+            "log": {
+                "at": now,
+                "message": ""
+            }
+        }
+    }
+    if body.status is not None:
+        update_query["$set"] = {"status": body.status}
+        update_query["$push"]["log"]["message"] = (
+            f"Set status: {body.status}"
+        )
+    elif body.description is not None:
+        update_query["$set"] = {"parameters.description": body.description}
+        update_query["$push"]["log"]["message"] = (
+            "Added update description"
+        )
     if body.status in ["completed", "failed"]:
         in_progress.delete_one(find_query)
         completed.insert_one(job)
-        completed.update_one(find_query, update_status_query)
-        if body.log is not None:
-            completed.update_one(find_query, add_log_query)
+        completed.update_one(find_query, update_query)
     else:
-        in_progress.update_one(find_query, update_status_query)
-        if body.log is not None:
-            in_progress.update_one(find_query, add_log_query)
+        in_progress.update_one(find_query, update_query)
+
+    if body.log is not None:
+        in_progress.update_one(
+            find_query,
+            {"$push": {"log": {"at": now, "message": body.log}}}
+        )
