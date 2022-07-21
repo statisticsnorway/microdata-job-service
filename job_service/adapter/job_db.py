@@ -29,8 +29,7 @@ db = client.jobDB
 completed = db.completed
 in_progress = db.inprogress
 
-
-logger = logging.getLogger("json_logging")
+logger = logging.getLogger()
 
 
 def get_job(job_id: str) -> Job:
@@ -77,18 +76,17 @@ def new_job(new_job_request: NewJobRequest) -> str:
             upsert=True
         )
     except DuplicateKeyError as e:
-        logger.error(str(e))
-        raise JobExistsException(  # pylint: disable=raise-missing-from
+        raise JobExistsException(
             f'Job with target {job.target} already in progress'
-        )
+        ) from e
     except Exception as e:
-        logger.error(str(e))
         raise e
     if update_result.upserted_id is None:
         logger.error(f'Job with target {job.target} already in progress')
         raise JobExistsException(
             f'Job with target {job.target} already in progress'
         )
+    logger.info(f'Successfully inserted new job: {job}')
     return job_id
 
 
@@ -122,15 +120,18 @@ def update_job(job_id: str, body: UpdateJobRequest) -> None:
         update_query["$push"]["log"]["message"] = (
             "Added update description"
         )
+    log_update_query = {"$push": {"log": {"at": now, "message": body.log}}}
     if body.status in ["completed", "failed"]:
+        logger.info(
+            f'Job status updated to {body.status}. '
+            'moving job to completed collection'
+        )
         in_progress.delete_one(find_query)
         completed.insert_one(job)
         completed.update_one(find_query, update_query)
+        if body.log is not None:
+            completed.update_one(find_query, log_update_query)
     else:
         in_progress.update_one(find_query, update_query)
-
-    if body.log is not None:
-        in_progress.update_one(
-            find_query,
-            {"$push": {"log": {"at": now, "message": body.log}}}
-        )
+        if body.log is not None:
+            in_progress.update_one(find_query, log_update_query)
