@@ -8,7 +8,7 @@ from pymongo.errors import DuplicateKeyError
 from job_service.model.request import (
     GetJobRequest, NewJobRequest, UpdateJobRequest
 )
-from job_service.config import environment
+from job_service.config import environment, secrets
 from job_service.exceptions import (
     JobExistsException, NotFoundException
 )
@@ -16,8 +16,8 @@ from job_service.model.job import Job
 
 
 MONGODB_URL = environment.get('MONGODB_URL')
-MONGODB_USER = environment.get('MONGODB_USER')
-MONGODB_PASSWORD = environment.get('MONGODB_PASSWORD')
+MONGODB_USER = secrets.get('MONGODB_USER')
+MONGODB_PASSWORD = secrets.get('MONGODB_PASSWORD')
 
 client = pymongo.MongoClient(
     MONGODB_URL,
