@@ -6,7 +6,7 @@ from flask import Flask
 
 from job_service.api.job_api import job_api
 from job_service.api.importable_datasets_api import importable_datasets_api
-from job_service.exceptions.exceptions import (
+from job_service.exceptions import (
     JobExistsException, NotFoundException, BadRequestException
 )
 from job_service.config.logging import (
@@ -26,22 +26,35 @@ def init_json_logging():
 
 
 logging.getLogger("json_logging").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+
 
 app = Flask(__name__)
 app.register_blueprint(job_api)
 app.register_blueprint(importable_datasets_api)
 
+init_json_logging()
+
 
 @app.errorhandler(NotFoundException)
 def handle_not_found(e):
+    logger.exception(e)
     return {"message": str(e)}, 404
 
 
 @app.errorhandler(BadRequestException)
 def handle_bad_request(e):
+    logger.exception(e)
     return {"message": str(e)}, 400
 
 
 @app.errorhandler(JobExistsException)
 def handle_job_exists(e):
+    logger.exception(e)
     return {"message": str(e)}, 400
+
+
+@app.errorhandler(Exception)
+def handle_unknown_error(e):
+    logger.exception(e)
+    return {"message": "Internal Server Error"}, 500
