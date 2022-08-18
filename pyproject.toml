@@ -6,7 +6,7 @@ authors = ["Team Microdata"]
 license = "Apache 2.0"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 Flask = "^2.1.1"
 Flask-Pydantic = "^0.9.0"
 pymongo = "^4.0.2"
