@@ -10,7 +10,7 @@ logger = logging.getLogger()
 importable_datasets_api = Blueprint('importable_datasets_api', __name__)
 
 
-@importable_datasets_api.route('/importable_datasets', methods=['GET'])
+@importable_datasets_api.route('/importable-datasets', methods=['GET'])
 def get_importable_datasets():
     logger.info('GET /importable-datasets')
     datasets = local_storage.get_importable_datasets()
