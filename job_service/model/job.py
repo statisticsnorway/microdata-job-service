@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from typing import List, Optional, Union
 
 from pydantic import Extra, root_validator
@@ -66,7 +66,7 @@ class JobParameters(CamelModel, use_enum_values=True):
 
 
 class Log(CamelModel, extra=Extra.forbid):
-    at: datetime.datetime
+    at: datetime
     message: str
 
     def dict(self, **kwargs):   # pylint: disable=unused-argument
@@ -78,6 +78,7 @@ class Job(CamelModel, use_enum_values=True):
     status: JobStatus
     parameters: JobParameters
     log: Optional[List[Log]] = []
+    created_at: str = datetime.now().isoformat()
 
     @root_validator(skip_on_failure=True)
     @classmethod
