@@ -78,7 +78,7 @@ class Job(CamelModel, use_enum_values=True):
     status: JobStatus
     parameters: JobParameters
     log: Optional[List[Log]] = []
-    created_at: str = datetime.now().isoformat()
+    created_at: str
 
     @root_validator(skip_on_failure=True)
     @classmethod

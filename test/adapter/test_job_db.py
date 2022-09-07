@@ -26,7 +26,7 @@ JOB = {
     'logs': [
         {'at': datetime.now(), 'message': 'example log'}
     ],
-    'created_at' : '2022-05-18T11:40:22.519222'
+    'created_at': '2022-05-18T11:40:22.519222'
 }
 
 

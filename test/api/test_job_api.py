@@ -18,7 +18,7 @@ JOB_LIST = [
             'target': 'MY_DATASET',
             'operation': 'ADD'
         },
-        created_at ='2022-05-18T11:40:22.519222'
+        created_at='2022-05-18T11:40:22.519222'
     ),
     Job(
         job_id='123-123-123-123',
@@ -27,7 +27,7 @@ JOB_LIST = [
             'target': 'OTHER_DATASET',
             'operation': 'ADD'
         },
-        created_at = '2022-05-18T11:40:22.519222'
+        created_at='2022-05-18T11:40:22.519222'
     )
 ]
 NEW_JOB_REQUEST = {
