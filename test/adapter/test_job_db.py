@@ -26,7 +26,7 @@ JOB = {
     'logs': [
         {'at': datetime.now(), 'message': 'example log'}
     ],
-    'created_at' : '2022-05-18T11:40:22.519222'
+    'created_at': '2022-05-18T11:40:22.519222'
 }
 
 
@@ -123,6 +123,20 @@ def test_update_job(mocker):
         UpdateJobRequest(status='initiated', log='update log')
     )
     assert spy.call_count == 3
+
+
+def test_new_job_different_created_at():
+    job1 = NewJobRequest(
+        operation='ADD',
+        target='NEW_DATASET'
+    ).generate_job_from_request("abc")
+
+    job2 = NewJobRequest(
+        operation='ADD',
+        target='NEW_DATASET'
+    ).generate_job_from_request("def")
+
+    assert job1.created_at != job2.created_at
 
 
 def test_update_job_completed(mocker):

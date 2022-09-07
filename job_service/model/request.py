@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import Extra, root_validator
@@ -66,7 +67,8 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
         return Job(
             job_id=job_id,
             status='queued',
-            parameters=job_parameters
+            parameters=job_parameters,
+            created_at=datetime.now().isoformat()
         )
 
 
