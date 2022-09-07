@@ -125,6 +125,20 @@ def test_update_job(mocker):
     assert spy.call_count == 3
 
 
+def test_new_job_different_created_at():
+    job1 = NewJobRequest(
+        operation='ADD',
+        target='NEW_DATASET'
+    ).generate_job_from_request("abc")
+
+    job2 = NewJobRequest(
+        operation='ADD',
+        target='NEW_DATASET'
+    ).generate_job_from_request("def")
+
+    assert job1.created_at != job2.created_at
+
+
 def test_update_job_completed(mocker):
     mocker.patch.object(
         job_db, 'in_progress', MockedInProgressCollection()
