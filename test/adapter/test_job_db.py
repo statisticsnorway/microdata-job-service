@@ -2,8 +2,7 @@
 from datetime import datetime
 
 import pytest
-
-from pymongo.results import UpdateResult
+from testcontainers.mongodb import MongoDbContainer
 
 from job_service.adapter import job_db
 from job_service.exceptions import NotFoundException
@@ -12,13 +11,12 @@ from job_service.model.request import (
     GetJobRequest, NewJobRequest, UpdateJobRequest
 )
 
-
 JOB_ID = "123-123-123-123"
 NON_EXISTING_JOB_ID = "abc-abc-abc-abc"
 JOB = {
     '_id': 'MONGO_DB_ID',
     'jobId': '123-123-123-123',
-    'status': 'completed',
+    'status': 'queued',
     'parameters': {
         'operation': 'ADD',
         'target': 'MY_DATASET'
@@ -26,53 +24,35 @@ JOB = {
     'logs': [
         {'at': datetime.now(), 'message': 'example log'}
     ],
-    'created_at': '2022-05-18T11:40:22.519222'
+    'created_at': str(datetime.now())
 }
 
 
-class MockedInProgressCollection:
-    def find_one(self, query):
-        if query['jobId'] == NON_EXISTING_JOB_ID:
-            return None
-        else:
-            return JOB
-
-    def find(self, query):
-        return [JOB]
-
-    def update_one(self, query, update, *, upsert=False):
-        return UpdateResult(
-            {"upserted": "mocked_upserted_id"},
-            acknowledged=True
-        )
-
-    def delete_one(self, query):
-        return None
+mongo = MongoDbContainer("mongo:5")
+DB_CLIENT = None
 
 
-class MockedCompletedCollection:
-    def find_one(self, query):
-        return None
+def setup_module():
+    global DB_CLIENT
+    mongo.start()
+    DB_CLIENT = mongo.get_connection_client()
 
-    def find(self, query):
-        return [None]
 
-    def insert_one(self, inserted):
-        return None
-
-    def update_one(self, query, update, *, upsert=False):
-        return UpdateResult(
-            {"upserted": "mocked_upserted_id"},
-            acknowledged=True
-        )
+def teardown_module():
+    mongo.stop()
 
 
 def test_get_job(mocker):
+    DB_CLIENT.jobdb.drop_collection('in_progress')
+    DB_CLIENT.jobdb.drop_collection('completed')
+    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     mocker.patch.object(
-        job_db, 'in_progress', MockedInProgressCollection()
+        job_db, 'in_progress',
+        DB_CLIENT.jobdb.in_progress
     )
     mocker.patch.object(
-        job_db, 'completed', MockedCompletedCollection()
+        job_db, 'completed',
+        DB_CLIENT.jobdb.completed
     )
     assert job_db.get_job(JOB_ID) == Job(**JOB)
 
@@ -82,22 +62,31 @@ def test_get_job(mocker):
 
 
 def test_get_jobs(mocker):
+    DB_CLIENT.jobdb.drop_collection('in_progress')
+    DB_CLIENT.jobdb.drop_collection('completed')
+    DB_CLIENT.jobdb.completed.insert_one(JOB)
     mocker.patch.object(
-        job_db, 'in_progress', MockedInProgressCollection()
+        job_db, 'in_progress',
+        DB_CLIENT.jobdb.in_progress
     )
     mocker.patch.object(
-        job_db, 'completed', MockedCompletedCollection()
+        job_db, 'completed',
+        DB_CLIENT.jobdb.completed
     )
     get_job_request = GetJobRequest(status='queued')
     assert job_db.get_jobs(get_job_request) == [Job(**JOB)]
 
 
 def test_new_job(mocker):
+    DB_CLIENT.jobdb.drop_collection('in_progress')
+    DB_CLIENT.jobdb.drop_collection('completed')
     mocker.patch.object(
-        job_db, 'in_progress', MockedInProgressCollection()
+        job_db, 'in_progress',
+        DB_CLIENT.jobdb.in_progress
     )
     mocker.patch.object(
-        job_db, 'completed', MockedCompletedCollection()
+        job_db, 'completed',
+        DB_CLIENT.jobdb.completed
     )
     assert job_db.new_job(
         NewJobRequest(
@@ -105,24 +94,32 @@ def test_new_job(mocker):
             target='NEW_DATASET'
         )
     ) is not None
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
 
 
 def test_update_job(mocker):
+    DB_CLIENT.jobdb.drop_collection('in_progress')
+    DB_CLIENT.jobdb.drop_collection('completed')
+    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     mocker.patch.object(
-        job_db, 'in_progress', MockedInProgressCollection()
+        job_db, 'in_progress',
+        DB_CLIENT.jobdb.in_progress
     )
     mocker.patch.object(
-        job_db, 'completed', MockedCompletedCollection()
+        job_db, 'completed',
+        DB_CLIENT.jobdb.completed
     )
-    spy = mocker.spy(MockedInProgressCollection, 'update_one')
-    job_db.update_job("123-123-123-123", UpdateJobRequest(status='initiated'))
-    assert spy.call_count == 1
+    job_db.update_job("123-123-123-123", UpdateJobRequest(status='validating'))
+    actual = job_db.get_job(JOB_ID)
+    assert actual.status == 'validating'
 
     job_db.update_job(
         "123-123-123-123",
-        UpdateJobRequest(status='initiated', log='update log')
+        UpdateJobRequest(status='validating', log='update log')
     )
-    assert spy.call_count == 3
+    actual = job_db.get_job(JOB_ID)
+    assert actual.status == 'validating'
+    assert actual.log[len(actual.log)-1].message == 'update log'
 
 
 def test_new_job_different_created_at():
@@ -140,20 +137,42 @@ def test_new_job_different_created_at():
 
 
 def test_update_job_completed(mocker):
+    DB_CLIENT.jobdb.drop_collection('in_progress')
+    DB_CLIENT.jobdb.drop_collection('completed')
+    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     mocker.patch.object(
-        job_db, 'in_progress', MockedInProgressCollection()
+        job_db, 'in_progress',
+        DB_CLIENT.jobdb.in_progress
     )
     mocker.patch.object(
-        job_db, 'completed', MockedCompletedCollection()
+        job_db, 'completed',
+        DB_CLIENT.jobdb.completed
     )
-    update_spy = mocker.spy(MockedCompletedCollection, 'update_one')
-    insert_spy = mocker.spy(MockedInProgressCollection, 'delete_one')
-    delete_spy = mocker.spy(MockedCompletedCollection, 'insert_one')
-    for index, status in enumerate(["completed", "failed"]):
-        job_db.update_job(
-            '123-123-123-123',
-            UpdateJobRequest(status=status, log="my new log")
-        )
-        assert insert_spy.call_count == 1 + index
-        assert delete_spy.call_count == 1 + index
-        assert update_spy.call_count == 2 + index * 2
+
+    job_db.update_job(
+        '123-123-123-123',
+        UpdateJobRequest(status='completed', log="my new log")
+    )
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 0
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 1
+
+
+def test_update_job_failed(mocker):
+    DB_CLIENT.jobdb.drop_collection('in_progress')
+    DB_CLIENT.jobdb.drop_collection('completed')
+    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    mocker.patch.object(
+        job_db, 'in_progress',
+        DB_CLIENT.jobdb.in_progress
+    )
+    mocker.patch.object(
+        job_db, 'completed',
+        DB_CLIENT.jobdb.completed
+    )
+
+    job_db.update_job(
+        '123-123-123-123',
+        UpdateJobRequest(status='failed', log="my new log")
+    )
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 0
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 1

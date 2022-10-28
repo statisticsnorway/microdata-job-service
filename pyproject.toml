@@ -24,6 +24,7 @@ pytest-cov = "^3.0.0"
 pytest-mock = "^3.7.0"
 pylint = "^2.14.4"
 pycodestyle = "^2.8.0"
+testcontainers = {extras = ["mongodb"], version = "^3.7.0"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
