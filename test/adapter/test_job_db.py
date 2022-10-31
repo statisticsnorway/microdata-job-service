@@ -33,6 +33,7 @@ DB_CLIENT = None
 
 
 def setup_module():
+    # pylint: disable=global-statement
     global DB_CLIENT
     mongo.start()
     DB_CLIENT = mongo.get_connection_client()
@@ -46,6 +47,9 @@ def test_get_job(mocker):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
+
     mocker.patch.object(
         job_db, 'in_progress',
         DB_CLIENT.jobdb.in_progress
@@ -64,7 +68,10 @@ def test_get_job(mocker):
 def test_get_jobs(mocker):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
-    DB_CLIENT.jobdb.completed.insert_one(JOB)
+    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
+
     mocker.patch.object(
         job_db, 'in_progress',
         DB_CLIENT.jobdb.in_progress
@@ -95,12 +102,16 @@ def test_new_job(mocker):
         )
     ) is not None
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
 
 
 def test_update_job(mocker):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
+
     mocker.patch.object(
         job_db, 'in_progress',
         DB_CLIENT.jobdb.in_progress
@@ -120,6 +131,8 @@ def test_update_job(mocker):
     actual = job_db.get_job(JOB_ID)
     assert actual.status == 'validating'
     assert actual.log[len(actual.log)-1].message == 'update log'
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
 
 
 def test_new_job_different_created_at():
@@ -140,6 +153,8 @@ def test_update_job_completed(mocker):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
     mocker.patch.object(
         job_db, 'in_progress',
         DB_CLIENT.jobdb.in_progress
@@ -161,6 +176,8 @@ def test_update_job_failed(mocker):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
     mocker.patch.object(
         job_db, 'in_progress',
         DB_CLIENT.jobdb.in_progress
