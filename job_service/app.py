@@ -58,3 +58,8 @@ def handle_job_exists(e):
 def handle_unknown_error(e):
     logger.exception(e)
     return {"message": "Internal Server Error"}, 500
+
+
+# this is needed to run the application in IDE
+if __name__ == "__main__":
+    app.run(port=8000, host="0.0.0.0")
