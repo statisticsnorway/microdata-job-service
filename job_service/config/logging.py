@@ -1,9 +1,10 @@
 import json
-import platform
 import sys
 
 import json_logging
 import tomlkit
+
+from job_service.config import environment
 
 
 def _get_project_meta():
@@ -15,7 +16,7 @@ def _get_project_meta():
 
 pkg_meta = _get_project_meta()
 service_name = "job-service"
-host = platform.node()
+host = environment.get('DOCKER_HOST_NAME')
 command = json.dumps(sys.argv)
 
 
