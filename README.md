@@ -162,7 +162,8 @@ MONGODB_URL=mongodb://localhost:27017/jobdb
 ```
 export MONGODB_USER=USER \
 export MONGODB_PASSWORD=123 \
-export INPUT_DIR=test/resources/input_directory
+export INPUT_DIR=test/resources/input_directory \
+export DOCKER_HOST_NAME=localhost
 ```
 * Run application from root directory: ```poetry run gunicorn job_service.app:app```
 
