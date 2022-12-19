@@ -20,7 +20,7 @@ def get_importable_datasets() -> List[ImportableDataset]:
         json_file_exists = os.path.exists(
             f'{INPUT_DIR}/{dataset_name}/{dataset_name}.json'
         )
-        if not json_file_exists and not csv_file_exists:
+        if not json_file_exists:
             continue
         importable_datasets.append(
             ImportableDataset(
