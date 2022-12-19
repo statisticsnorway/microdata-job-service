@@ -12,21 +12,19 @@ def get_importable_datasets() -> List[ImportableDataset]:
     """
     Returns names of all valid datasets in input directory.
     """
-    importable_datasets = []
-    for dataset_name in os.listdir(INPUT_DIR):
-        csv_file_exists = os.path.exists(
-            f'{INPUT_DIR}/{dataset_name}/{dataset_name}.csv'
-        )
-        json_file_exists = os.path.exists(
-            f'{INPUT_DIR}/{dataset_name}/{dataset_name}.json'
-        )
-        if not json_file_exists:
-            continue
-        importable_datasets.append(
+    return [
+        importable_dataset for importable_dataset in
+        [
             ImportableDataset(
                 dataset_name=dataset_name,
-                has_data=csv_file_exists,
-                has_metadata=json_file_exists
+                has_data=os.path.exists(
+                    f'{INPUT_DIR}/{dataset_name}/{dataset_name}.csv'
+                ),
+                has_metadata=os.path.exists(
+                    f'{INPUT_DIR}/{dataset_name}/{dataset_name}.json'
+                )
             )
-        )
-    return importable_datasets
+            for dataset_name in os.listdir(INPUT_DIR)
+        ]
+        if importable_dataset.has_metadata
+    ]
