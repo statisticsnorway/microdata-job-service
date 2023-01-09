@@ -7,6 +7,12 @@ from job_service.model.camelcase_model import CamelModel
 from job_service.model.enums import JobStatus, ReleaseStatus, Operation
 
 
+class UserInfo(CamelModel, extra=Extra.forbid):
+    user_id: str
+    first_name: str
+    last_name: str
+
+
 class DataStructureUpdate(CamelModel, extra=Extra.forbid):
     name: str
     description: str
@@ -29,6 +35,8 @@ class JobParameters(CamelModel, use_enum_values=True):
     bump_manifesto: Optional[DatastoreVersion]
     description: Optional[str]
     release_status: Optional[ReleaseStatus]
+    bump_from_version: Optional[str]
+    bump_to_version: Optional[str]
 
     @root_validator(skip_on_failure=True)
     @classmethod
@@ -79,6 +87,7 @@ class Job(CamelModel, use_enum_values=True):
     parameters: JobParameters
     log: Optional[List[Log]] = []
     created_at: str
+    created_by: UserInfo
 
     @root_validator(skip_on_failure=True)
     @classmethod
