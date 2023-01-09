@@ -2,13 +2,19 @@ from flask import url_for
 from job_service.exceptions import NotFoundException
 
 from job_service.adapter import job_db
-from job_service.model.job import Job
+from job_service.model.job import Job, UserInfo
 from job_service.model.request import (
     NewJobRequest, UpdateJobRequest
 )
 
 NOT_FOUND_MESSAGE = 'not found'
 JOB_ID = '123-123-123-123'
+USER_INFO_DICT = {
+    'userId': '123-123-123',
+    'firstName': 'Data',
+    'lastName': 'Admin'
+}
+USER_INFO = UserInfo(**USER_INFO_DICT)
 JOB_LIST = [
     Job(
         job_id='123-123-123-123',
@@ -18,7 +24,8 @@ JOB_LIST = [
             'target': 'MY_DATASET',
             'operation': 'ADD'
         },
-        created_at='2022-05-18T11:40:22.519222'
+        created_at='2022-05-18T11:40:22.519222',
+        created_by=USER_INFO_DICT
     ),
     Job(
         job_id='123-123-123-123',
@@ -27,7 +34,8 @@ JOB_LIST = [
             'target': 'OTHER_DATASET',
             'operation': 'ADD'
         },
-        created_at='2022-05-18T11:40:22.519222'
+        created_at='2022-05-18T11:40:22.519222',
+        created_by=USER_INFO_DICT
     )
 ]
 NEW_JOB_REQUEST = {
@@ -94,10 +102,10 @@ def test_new_job(flask_app, mocker):
     )
     assert new_job.call_count == 2
     new_job.assert_any_call(
-        NewJobRequest(**NEW_JOB_REQUEST['jobs'][0])
+        NewJobRequest(**NEW_JOB_REQUEST['jobs'][0]), USER_INFO
     )
     new_job.assert_any_call(
-        NewJobRequest(**NEW_JOB_REQUEST['jobs'][1])
+        NewJobRequest(**NEW_JOB_REQUEST['jobs'][1]), USER_INFO
     )
     assert response.status_code == 200
     assert response.json == [

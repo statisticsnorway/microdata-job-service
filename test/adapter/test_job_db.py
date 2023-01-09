@@ -6,12 +6,18 @@ from testcontainers.mongodb import MongoDbContainer
 
 from job_service.adapter import job_db
 from job_service.exceptions import NotFoundException
-from job_service.model.job import Job
+from job_service.model.job import Job, UserInfo
 from job_service.model.request import (
     GetJobRequest, NewJobRequest, UpdateJobRequest
 )
 
 JOB_ID = "123-123-123-123"
+USER_INFO_DICT = {
+    'userId': '123-123-123',
+    'firstName': 'Data',
+    'lastName': 'Admin'
+}
+USER_INFO = UserInfo(**USER_INFO_DICT)
 NON_EXISTING_JOB_ID = "abc-abc-abc-abc"
 JOB = {
     '_id': 'MONGO_DB_ID',
@@ -21,6 +27,7 @@ JOB = {
         'operation': 'ADD',
         'target': 'MY_DATASET'
     },
+    'created_by': USER_INFO_DICT,
     'logs': [
         {'at': datetime.now(), 'message': 'example log'}
     ],
@@ -99,10 +106,15 @@ def test_new_job(mocker):
         NewJobRequest(
             operation='ADD',
             target='NEW_DATASET'
-        )
+        ),
+        USER_INFO
     ) is not None
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    actual = job_db.get_jobs(GetJobRequest())[0]
+    assert actual.created_by.dict() == USER_INFO.dict()
+    assert actual.parameters.target == 'NEW_DATASET'
+    assert actual.parameters.operation == 'ADD'
 
 
 def test_update_job(mocker):
@@ -139,12 +151,12 @@ def test_new_job_different_created_at():
     job1 = NewJobRequest(
         operation='ADD',
         target='NEW_DATASET'
-    ).generate_job_from_request("abc")
+    ).generate_job_from_request("abc", USER_INFO)
 
     job2 = NewJobRequest(
         operation='ADD',
         target='NEW_DATASET'
-    ).generate_job_from_request("def")
+    ).generate_job_from_request("def", USER_INFO)
 
     assert job1.created_at != job2.created_at
 
