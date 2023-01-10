@@ -12,7 +12,7 @@ from job_service.config import environment, secrets
 from job_service.exceptions import (
     JobExistsException, NotFoundException
 )
-from job_service.model.job import Job
+from job_service.model.job import Job, UserInfo
 
 
 MONGODB_URL = environment.get('MONGODB_URL')
@@ -59,14 +59,14 @@ def get_jobs(query: GetJobRequest) -> List[Job]:
     return [Job(**job) for job in jobs if job is not None]
 
 
-def new_job(new_job_request: NewJobRequest) -> str:
+def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> str:
     """
     Creates a new job for supplied command, status and dataset_name, and
     returns job_id of created job.
     Raises JobExistsException if job already exists in database.
     """
     job_id = str(uuid.uuid4())
-    job = new_job_request.generate_job_from_request(job_id)
+    job = new_job_request.generate_job_from_request(job_id, user_info)
     update_result = None
     logger.info(f'inserting new job {job}')
     try:

@@ -6,7 +6,9 @@ from pydantic import Extra, root_validator
 from job_service.exceptions import BadQueryException, BadRequestException
 from job_service.model.camelcase_model import CamelModel
 from job_service.model.enums import JobStatus, Operation, ReleaseStatus
-from job_service.model.job import DatastoreVersion, Job, JobParameters
+from job_service.model.job import (
+    DatastoreVersion, Job, JobParameters, UserInfo
+)
 
 
 class NewJobRequest(CamelModel, extra=Extra.forbid):
@@ -39,7 +41,9 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
                 )
         return values
 
-    def generate_job_from_request(self, job_id: str) -> Job:
+    def generate_job_from_request(
+        self, job_id: str, user_info: UserInfo
+    ) -> Job:
         if self.operation == 'SET_STATUS':
             job_parameters = JobParameters(
                 operation=self.operation,
@@ -68,7 +72,8 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
             job_id=job_id,
             status='queued',
             parameters=job_parameters,
-            created_at=datetime.now().isoformat()
+            created_at=datetime.now().isoformat(),
+            created_by=user_info
         )
 
 
