@@ -18,7 +18,6 @@ USER_INFO = UserInfo(**USER_INFO_DICT)
 JOB_LIST = [
     Job(
         job_id='123-123-123-123',
-        operation='ADD',
         status='completed',
         parameters={
             'target': 'MY_DATASET',
