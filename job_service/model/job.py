@@ -46,11 +46,14 @@ class JobParameters(CamelModel, use_enum_values=True):
             operation == Operation.BUMP
             and (
                 values.get('bump_manifesto') is None or
-                values.get('description') is None
+                values.get('description') is None or
+                values.get('bump_from_version') is None or
+                values.get('bump_to_version') is None or
+                values.get('target') != 'DATASTORE'
             )
         ):
             raise ValueError(
-                'No supplied bump manifesto for BUMP operation'
+                'Invalid or missing arguments for BUMP operation'
             )
         elif (
             operation == Operation.REMOVE
