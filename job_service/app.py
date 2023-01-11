@@ -4,11 +4,12 @@ import logging
 import json_logging
 
 from flask import Flask
+from pydantic import ValidationError
 
 from job_service.api.job_api import job_api
 from job_service.api.importable_datasets_api import importable_datasets_api
 from job_service.exceptions import (
-    JobExistsException, NotFoundException, BadRequestException
+    JobExistsException, NotFoundException
 )
 from job_service.config.logging import (
     CustomJSONLog, CustomJSONRequestLogFormatter
@@ -43,7 +44,7 @@ def handle_not_found(e):
     return {"message": str(e)}, 404
 
 
-@app.errorhandler(BadRequestException)
+@app.errorhandler(ValidationError)
 def handle_bad_request(e):
     logger.exception(e)
     return {"message": str(e)}, 400
