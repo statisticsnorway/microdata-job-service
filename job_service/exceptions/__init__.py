@@ -2,10 +2,6 @@ class NotFoundException(Exception):
     ...
 
 
-class BadRequestException(Exception):
-    ...
-
-
 class JobExistsException(Exception):
     ...
 
