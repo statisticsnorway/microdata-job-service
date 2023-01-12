@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import Extra, root_validator
+from pydantic import Extra, root_validator, ValidationError
 
-from job_service.exceptions import BadQueryException, BadRequestException
+from job_service.exceptions import BadQueryException
 from job_service.model.camelcase_model import CamelModel
 from job_service.model.enums import JobStatus, Operation, ReleaseStatus
 from job_service.model.job import (
@@ -17,27 +17,33 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
     release_status: Optional[ReleaseStatus]
     description: Optional[str]
     bump_manifesto: Optional[DatastoreVersion]
+    bump_from_version: Optional[str]
+    bump_to_version: Optional[str]
 
     @root_validator(skip_on_failure=True)
     def check_command_type(cls, values):  # pylint: disable=no-self-argument
         operation = values['operation']
         if operation in ['REMOVE', 'BUMP']:
             if values.get('description') is None:
-                raise BadRequestException(
+                raise ValidationError(
                     'Must provide a description when '
                     f'operation is {operation}.'
                 )
         if operation == 'SET_STATUS':
             if values.get('release_status') is None:
-                raise BadRequestException(
+                raise ValidationError(
                     'Must provide a releaseStatus when '
                     f'operation is {operation}.'
                 )
         if operation == 'BUMP':
-            if values.get('bump_manifesto') is None:
-                raise BadRequestException(
-                    'Must provide a bumpManifesto when '
-                    f'operation is {operation}.'
+            if (
+                values.get('bump_manifesto') is None
+                or values.get('bump_from_version') is None
+                or values.get('bump_to_version') is None
+            ):
+                raise ValidationError(
+                    'Must provide a bumpManifesto, bumpFromVersion and '
+                    f'bumpToVersion when operation is {operation}.'
                 )
         return values
 
@@ -61,7 +67,9 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
                 operation=self.operation,
                 bump_manifesto=self.bump_manifesto,
                 description=self.description,
-                target=self.target
+                target=self.target,
+                bump_from_version=self.bump_from_version,
+                bump_to_version=self.bump_to_version
             )
         else:
             job_parameters = JobParameters(
