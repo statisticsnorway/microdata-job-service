@@ -108,8 +108,8 @@ def test_new_job(flask_app, mocker):
     )
     assert response.status_code == 200
     assert response.json == [
-        {'msg': 'CREATED', 'status': 'queued'},
-        {'msg': 'CREATED', 'status': 'queued'}
+        {'msg': 'CREATED', 'status': 'queued', 'job_id': JOB_ID},
+        {'msg': 'CREATED', 'status': 'queued', 'job_id': JOB_ID}
     ]
 
 

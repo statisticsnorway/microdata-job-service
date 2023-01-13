@@ -35,8 +35,12 @@ def new_job(body: NewJobsRequest):
     )
     for job in body.jobs:
         try:
-            job_db.new_job(job, user_info)
-            response_list.append({'status': 'queued', 'msg': 'CREATED'})
+            job_id = job_db.new_job(job, user_info)
+            response_list.append({
+                'status': 'queued',
+                'msg': 'CREATED',
+                'job_id': job_id
+            })
         except Exception:
             response_list.append({'status': 'FAILED', 'msg': 'FAILED'})
     return jsonify(response_list), 200
