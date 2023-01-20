@@ -40,7 +40,7 @@ JOB_LIST = [
 NEW_JOB_REQUEST = {
     'jobs': [
         {'operation': 'ADD', 'target': 'MY_DATASET'},
-        {'operation': 'CHANGE_DATA', 'target': 'OTHER_DATASET'}
+        {'operation': 'CHANGE', 'target': 'OTHER_DATASET'}
     ]
 }
 UPDATE_JOB_REQUEST = {
@@ -57,7 +57,7 @@ def test_get_jobs(flask_app, mocker):
         url_for(
             "job_api.get_jobs",
             status="completed",
-            operation="ADD,CHANGE_DATA,PATCH_METADATA"
+            operation="ADD,CHANGE,PATCH_METADATA"
         ),
     )
     assert response.json == [job.dict(by_alias=True) for job in JOB_LIST]
