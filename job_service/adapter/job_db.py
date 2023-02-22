@@ -52,7 +52,7 @@ def get_jobs(query: GetJobRequest) -> List[Job]:
     Returns list of jobs with matching status from database.
     """
     find_query = query.to_mongo_query()
-    logger.info(str(find_query))
+    logger.debug(str(find_query))
     jobs = list(in_progress.find(find_query))
     if not query.ignoreCompleted:
         jobs = jobs + list(completed.find(find_query))

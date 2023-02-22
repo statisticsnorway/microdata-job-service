@@ -18,7 +18,7 @@ job_api = Blueprint('job_api', __name__)
 @job_api.route('/jobs', methods=['GET'])
 @validate()
 def get_jobs(query: GetJobRequest):
-    logger.info(f'GET /jobs with query: {query}')
+    logger.debug(f'GET /jobs with query: {query}')
     jobs = job_db.get_jobs(query)
     return jsonify([job.dict(by_alias=True) for job in jobs])
 
