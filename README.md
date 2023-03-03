@@ -60,7 +60,7 @@ _____
 >
 >  | status | json                                                                                        |
 >  |--------|---------------------------------------------------------------------------------------------|
->  |   200  |```[{"status": "CREATED", "msg": "OK"}, {"status": "FAILED", "msg": "Missing operation"}]``` |
+>  |   200  |```[{"job_id": "123-123-123", status": "CREATED", "msg": "OK"}, {"status": "FAILED", "msg": "Missing operation"}]``` |
 >  |   400  |```{"message": "<Error message>"}```                                                         |
 >  |   500  |```{"message": "<Error message>"}```                                                         |
 >
@@ -109,6 +109,46 @@ _____
 >  |   500  |```{"message": "<Error message>"}```                                               |
 >
 ></details>
+_____
+> ### **[GET]** `/targets`
+>Get all target objects
+><details>
+>  <summary>Example request</summary>
+>  
+>  ```curl -X GET <url>/targets```
+></details>
+></details>
+><details>
+>  <summary>Responses</summary>
+>
+>  | status | json                                                                                        |
+>  |--------|---------------------------------------------------------------------------------------------|
+>  |   200  |```[...targets]``` |
+>  |   400  |```{"message": "<Error message>"}```                                                         |
+>  |   500  |```{"message": "<Error message>"}```                                                         |
+>
+></details>
+_____
+> ### **[GET]** `/targets/<name>`
+>Get all jobs for target with given name, or datastore bump jobs containing the target name
+> in its datastore updates.
+><details>
+>  <summary>Example request</summary>
+>  
+>  ```curl -X GET <url>/targets/<name>```
+></details>
+></details>
+><details>
+>  <summary>Responses</summary>
+>
+>  | status | json                                                                                        |
+>  |--------|---------------------------------------------------------------------------------------------|
+>  |   200  |```[...jobs]``` |
+>  |   400  |```{"message": "<Error message>"}```                                                         |
+>  |   500  |```{"message": "<Error message>"}```                                                         |
+>
+></details>
+_____
 </br>
 </br>
 
