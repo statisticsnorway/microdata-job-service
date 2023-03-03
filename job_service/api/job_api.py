@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, jsonify
 from flask_pydantic import validate
 
-from job_service.adapter import job_db
+from job_service.adapter import job_db, target_db
 from job_service.model.job import UserInfo
 from job_service.model.request import (
     NewJobsRequest, UpdateJobRequest, GetJobRequest
@@ -33,15 +33,17 @@ def new_job(body: NewJobsRequest):
         firstName='Data',
         lastName='Admin'
     )
-    for job in body.jobs:
+    for job_request in body.jobs:
         try:
-            job_id = job_db.new_job(job, user_info)
+            job = job_db.new_job(job_request, user_info)
             response_list.append({
                 'status': 'queued',
                 'msg': 'CREATED',
-                'job_id': job_id
+                'job_id': job.job_id
             })
-        except Exception:
+            target_db.update_target(job)
+        except Exception as e:
+            logger.exception(e)
             response_list.append({'status': 'FAILED', 'msg': 'FAILED'})
     return jsonify(response_list), 200
 
@@ -60,5 +62,6 @@ def update_job(body: UpdateJobRequest, job_id: str):
     logger.info(
         f'PUT /jobs/{job_id} with request body: {body.dict(by_alias=True)}'
     )
-    job_db.update_job(job_id, body)
+    job = job_db.update_job(job_id, body)
+    target_db.update_target(job)
     return {'message': f'Updated job with jobId {job_id}'}
