@@ -101,3 +101,19 @@ class Job(CamelModel, use_enum_values=True):
                 'message': 'Job generated and queued'
             }]
         return values
+
+    def get_action(self) -> list[str]:
+        match(self.parameters.operation):
+            case 'SET_STATUS':
+                return [
+                    self.parameters.operation,
+                    self.parameters.release_status
+                ]
+            case 'BUMP':
+                return [
+                    self.parameters.operation,
+                    self.parameters.bump_from_version,
+                    self.parameters.bump_to_version
+                ]
+            case _:
+                return [self.parameters.operation]
