@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, jsonify
 from flask_pydantic import validate
 
-from job_service.adapter import target_db
+from job_service.adapter import target_db, job_db
 
 
 logger = logging.getLogger()
@@ -21,6 +21,6 @@ def get_targets():
 @targets_api.route('/targets/<name>', methods=['GET'])
 @validate()
 def get_target(name: str):
-    logger.info(f'GET /jobs/{name}')
-    target = target_db.get_target(name)
-    return target.dict(by_alias=True)
+    logger.info(f'GET /targets/{name}')
+    jobs = job_db.get_jobs_for_target(name)
+    return [job.dict(by_alias=True) for job in jobs]
