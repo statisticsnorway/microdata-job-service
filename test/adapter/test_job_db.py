@@ -2,6 +2,7 @@
 from datetime import datetime
 
 import pytest
+from pytest_mock import MockFixture
 from testcontainers.mongodb import MongoDbContainer
 
 from job_service.adapter import job_db
@@ -36,21 +37,15 @@ JOB = {
 
 
 mongo = MongoDbContainer("mongo:5")
-DB_CLIENT = None
-
-
-def setup_module():
-    # pylint: disable=global-statement
-    global DB_CLIENT
-    mongo.start()
-    DB_CLIENT = mongo.get_connection_client()
+mongo.start()
+DB_CLIENT = mongo.get_connection_client()
 
 
 def teardown_module():
     mongo.stop()
 
 
-def test_get_job(mocker):
+def test_get_job(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
@@ -72,7 +67,7 @@ def test_get_job(mocker):
     assert "No job found for jobId:" in str(e)
 
 
-def test_get_jobs(mocker):
+def test_get_jobs(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
@@ -91,7 +86,7 @@ def test_get_jobs(mocker):
     assert job_db.get_jobs(get_job_request) == [Job(**JOB)]
 
 
-def test_new_job(mocker):
+def test_new_job(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     mocker.patch.object(
@@ -117,7 +112,7 @@ def test_new_job(mocker):
     assert actual.parameters.operation == 'ADD'
 
 
-def test_update_job(mocker):
+def test_update_job(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
@@ -161,7 +156,7 @@ def test_new_job_different_created_at():
     assert job1.created_at != job2.created_at
 
 
-def test_update_job_completed(mocker):
+def test_update_job_completed(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
@@ -184,7 +179,7 @@ def test_update_job_completed(mocker):
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 1
 
 
-def test_update_job_failed(mocker):
+def test_update_job_failed(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
