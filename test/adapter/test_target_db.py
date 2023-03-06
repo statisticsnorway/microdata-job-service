@@ -57,7 +57,7 @@ BUMP_JOB = Job(
     created_by=USER_INFO_DICT,
     parameters=JobParameters(
         bump_from_version='1.0.0',
-        bump_to_version='1.1.0',
+        bump_to_version='2.0.0',
         operation='BUMP',
         target='DATASTORE',
         description='Updates',
@@ -66,7 +66,7 @@ BUMP_JOB = Job(
             description='Draft version',
             release_time='123123',
             language_code='no',
-            update_type='MINOR',
+            update_type='MAJOR',
             data_structure_updates=[
                 DataStructureUpdate(
                     name='MY_DATASET',
@@ -77,8 +77,8 @@ BUMP_JOB = Job(
                 DataStructureUpdate(
                     name='FRESH_DATASET',
                     description='Update',
-                    operation='ADD',
-                    release_status='PENDING_RELEASE'
+                    operation='REMOVE',
+                    release_status='PENDING_DELETE'
                 ),
                 DataStructureUpdate(
                     name='FRESH_DATASET2',
@@ -147,7 +147,8 @@ def test_update_target(mocker: MockFixture):
 def test_update_targets_bump(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('targets')
     DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[0].dict(by_alias=True))
-    assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
+    DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[1].dict(by_alias=True))
+    assert DB_CLIENT.jobdb.targets.count_documents({}) == 2
 
     mocker.patch.object(
         target_db, 'targets_collection',
@@ -155,13 +156,22 @@ def test_update_targets_bump(mocker: MockFixture):
     )
 
     target_db.update_bump_targets(BUMP_JOB)
-    assert DB_CLIENT.jobdb.targets.count_documents({}) == 3
+    assert DB_CLIENT.jobdb.targets.count_documents({}) == 4
     targets = target_db.get_targets()
-    assert len(targets) == 3
-    assert [target.action[0] for target in targets] == [
-        'RELEASED', 'RELEASED', 'RELEASED'
-    ]
-    target_names = [target.name for target in targets]
-    assert 'MY_DATASET' in target_names
-    assert 'FRESH_DATASET' in target_names
-    assert 'FRESH_DATASET2' in target_names
+    assert len(targets) == 4
+    my_dataset_target = next(
+        target for target in targets if target.name == 'MY_DATASET'
+    )
+    fresh_dataset_target = next(
+        target for target in targets if target.name == 'FRESH_DATASET'
+    )
+    fresh_dataset2_target = next(
+        target for target in targets if target.name == 'FRESH_DATASET2'
+    )
+    other_dataset_target = next(
+        target for target in targets if target.name == 'OTHER_DATASET'
+    )
+    assert my_dataset_target.action == ['RELEASED', '2.0.0']
+    assert fresh_dataset_target.action == ['REMOVED', '2.0.0']
+    assert fresh_dataset2_target.action == ['RELEASED', '2.0.0']
+    assert other_dataset_target == TARGET_LIST[1]
