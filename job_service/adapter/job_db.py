@@ -107,7 +107,7 @@ def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> Job:
     return job
 
 
-def update_job(job_id: str, body: UpdateJobRequest) -> str:
+def update_job(job_id: str, body: UpdateJobRequest) -> Job:
     """
     Updates job with supplied job_id with new status.
     Appends additional log if supplied.

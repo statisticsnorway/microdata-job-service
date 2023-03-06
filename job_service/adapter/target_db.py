@@ -51,3 +51,29 @@ def update_target(job: Job) -> None:
         },
         upsert=True
     )
+
+
+def update_bump_targets(job: Job) -> None:
+    updates = [
+        update for update
+        in job.parameters.bump_manifesto.data_structure_updates
+        if update.release_status != 'DRAFT'
+    ]
+    for update in updates:
+        operation = (
+            'RELEASED' if update.release_status == 'PENDING_RELEASE'
+            else 'REMOVED'
+        )
+        version = job.parameters.bump_to_version
+        targets_collection.update_one(
+            {'name': update.name},
+            {
+                '$set': {
+                    'lastUpdatedAt': datetime.now().isoformat(),
+                    'status': job.status,
+                    'lastUpdatedBy': job.created_by.dict(by_alias=True),
+                    'action': [operation, version]
+                }
+            },
+            upsert=True
+        )

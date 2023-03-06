@@ -64,4 +64,6 @@ def update_job(body: UpdateJobRequest, job_id: str):
     )
     job = job_db.update_job(job_id, body)
     target_db.update_target(job)
+    if job.parameters.target == "DATASTORE" and job.status == "completed":
+        target_db.update_bump_targets(job)
     return {'message': f'Updated job with jobId {job_id}'}
