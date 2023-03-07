@@ -1,7 +1,8 @@
 from flask import url_for
-from job_service.exceptions import NotFoundException
+from pytest_mock import MockFixture
 
-from job_service.adapter import job_db
+from job_service.exceptions import NotFoundException
+from job_service.adapter import job_db, target_db
 from job_service.model.job import Job, UserInfo
 from job_service.model.request import (
     NewJobRequest, UpdateJobRequest
@@ -49,7 +50,7 @@ UPDATE_JOB_REQUEST = {
 }
 
 
-def test_get_jobs(flask_app, mocker):
+def test_get_jobs(flask_app, mocker: MockFixture):
     get_jobs = mocker.patch.object(
         job_db, 'get_jobs', return_value=JOB_LIST
     )
@@ -65,7 +66,7 @@ def test_get_jobs(flask_app, mocker):
     get_jobs.assert_called_once()
 
 
-def test_get_job(flask_app, mocker):
+def test_get_job(flask_app, mocker: MockFixture):
     get_job = mocker.patch.object(
         job_db, 'get_job', return_value=JOB_LIST[0]
     )
@@ -78,7 +79,7 @@ def test_get_job(flask_app, mocker):
     assert response.json == JOB_LIST[0].dict(by_alias=True)
 
 
-def test_get_job_not_found(flask_app, mocker):
+def test_get_job_not_found(flask_app, mocker: MockFixture):
     get_job = mocker.patch.object(
         job_db, 'get_job', side_effect=NotFoundException(NOT_FOUND_MESSAGE)
     )
@@ -91,9 +92,12 @@ def test_get_job_not_found(flask_app, mocker):
     assert response.json == {"message": NOT_FOUND_MESSAGE}
 
 
-def test_new_job(flask_app, mocker):
+def test_new_job(flask_app, mocker: MockFixture):
     new_job = mocker.patch.object(
-        job_db, 'new_job', return_value=JOB_ID
+        job_db, 'new_job', return_value=JOB_LIST[0]
+    )
+    update_target = mocker.patch.object(
+        target_db, 'update_target'
     )
     response = flask_app.post(
         url_for('job_api.new_job'),
@@ -106,6 +110,7 @@ def test_new_job(flask_app, mocker):
     new_job.assert_any_call(
         NewJobRequest(**NEW_JOB_REQUEST['jobs'][1]), USER_INFO
     )
+    assert update_target.call_count == 2
     assert response.status_code == 200
     assert response.json == [
         {'msg': 'CREATED', 'status': 'queued', 'job_id': JOB_ID},
@@ -113,14 +118,18 @@ def test_new_job(flask_app, mocker):
     ]
 
 
-def test_update_job(flask_app, mocker):
+def test_update_job(flask_app, mocker: MockFixture):
     update_job = mocker.patch.object(
-        job_db, 'update_job', return_value=JOB_ID
+        job_db, 'update_job', return_value=JOB_LIST[0]
+    )
+    update_target = mocker.patch.object(
+        target_db, 'update_target'
     )
     response = flask_app.put(
         url_for('job_api.update_job', job_id=JOB_ID),
         json=UPDATE_JOB_REQUEST
     )
+    update_target.assert_called_once()
     update_job.assert_called_once()
     update_job.assert_called_with(
         JOB_ID,
@@ -130,10 +139,14 @@ def test_update_job(flask_app, mocker):
     assert response.json == {'message': f'Updated job with jobId {JOB_ID}'}
 
 
-def test_update_job_bad_request(flask_app):
+def test_update_job_bad_request(flask_app, mocker: MockFixture):
+    update_target = mocker.patch.object(
+        target_db, 'update_target'
+    )
     response = flask_app.put(
         url_for('job_api.update_job', job_id=JOB_ID),
         json={"status": "no-such-status"}
     )
+    update_target.assert_not_called()
     assert response.status_code == 400
     assert 'validation_error' in response.json
