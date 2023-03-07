@@ -98,7 +98,7 @@ BUMP_JOB = Job(
 )
 
 
-mongo = MongoDbContainer("mongo:5")
+mongo = MongoDbContainer("mongo:5.0")
 mongo.start()
 DB_CLIENT = mongo.get_connection_client()
 
