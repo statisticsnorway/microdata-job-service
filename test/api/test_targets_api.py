@@ -79,7 +79,7 @@ def test_get_target(flask_app, mocker):
         job_db, 'get_jobs_for_target', return_value=JOB_LIST
     )
     response = flask_app.get(
-        url_for('targets_api.get_target', name='MY_DATASET')
+        url_for('targets_api.get_target_jobs', name='MY_DATASET')
     )
     get_jobs_for_target.assert_called_once()
     get_jobs_for_target.assert_called_with('MY_DATASET')
@@ -92,7 +92,7 @@ def test_get_target_none_found(flask_app, mocker):
         job_db, 'get_jobs_for_target', return_value=[]
     )
     response = flask_app.get(
-        url_for('targets_api.get_target', name='MY_DATASET')
+        url_for('targets_api.get_target_jobs', name='MY_DATASET')
     )
     get_job.assert_called_once()
     get_job.assert_called_with('MY_DATASET')

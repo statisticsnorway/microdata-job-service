@@ -135,7 +135,7 @@ _____
 ><details>
 >  <summary>Example request</summary>
 >  
->  ```curl -X GET <url>/targets/<name>```
+>  ```curl -X GET <url>/targets/<name>/jobs```
 ></details>
 ></details>
 ><details>
