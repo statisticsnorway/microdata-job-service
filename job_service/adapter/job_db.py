@@ -59,7 +59,24 @@ def get_jobs(query: GetJobRequest) -> List[Job]:
     return [Job(**job) for job in jobs if job is not None]
 
 
-def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> str:
+def get_jobs_for_target(name: str) -> List[Job]:
+    """
+    Returns list of jobs with matching target name for database.
+    Including datastore bump jobs that include the name in
+    datastructureUpdates.
+    """
+    find_query = {
+        '$or': [
+            {'parameters.bumpManifesto.dataStructureUpdates.name': name},
+            {'parameters.target': name}
+        ]
+    }
+    in_progress_jobs = list(in_progress.find(find_query))
+    completed_jobs = list(completed.find(find_query))
+    return [Job(**job) for job in in_progress_jobs + completed_jobs]
+
+
+def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> Job:
     """
     Creates a new job for supplied command, status and dataset_name, and
     returns job_id of created job.
@@ -68,10 +85,10 @@ def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> str:
     job_id = str(uuid.uuid4())
     job = new_job_request.generate_job_from_request(job_id, user_info)
     update_result = None
-    logger.info(f'inserting new job {job}')
+    logger.info(f'Inserting new job {job}')
     try:
         update_result: UpdateResult = in_progress.update_one(
-            {"target": job.parameters.target},
+            {"parameters.target": job.parameters.target},
             {"$setOnInsert": job.dict(by_alias=True)},
             upsert=True
         )
@@ -87,27 +104,24 @@ def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> str:
             f'Job with target {job.target} already in progress'
         )
     logger.info(f'Successfully inserted new job: {job}')
-    return job_id
+    return job
 
 
-def update_job(job_id: str, body: UpdateJobRequest) -> None:
+def update_job(job_id: str, body: UpdateJobRequest) -> Job:
     """
     Updates job with supplied job_id with new status.
     Appends additional log if supplied.
     """
     now = datetime.now()
     find_query = {"jobId": job_id}
-    job = in_progress.find_one(find_query)
+    job: Job = in_progress.find_one(find_query)
     if job is None:
         raise NotFoundException(f"Could not find job with id {job_id}")
 
     update_query = {
         "$set": {},
         "$push": {
-            "log": {
-                "at": now,
-                "message": ""
-            }
+            "log": {"at": now, "message": ""}
         }
     }
     if body.status is not None:
@@ -131,7 +145,9 @@ def update_job(job_id: str, body: UpdateJobRequest) -> None:
         completed.update_one(find_query, update_query)
         if body.log is not None:
             completed.update_one(find_query, log_update_query)
+        return Job(**completed.find_one(find_query))
     else:
         in_progress.update_one(find_query, update_query)
         if body.log is not None:
             in_progress.update_one(find_query, log_update_query)
+        return Job(**in_progress.find_one(find_query))
