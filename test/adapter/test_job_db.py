@@ -6,7 +6,7 @@ from pytest_mock import MockFixture
 from testcontainers.mongodb import MongoDbContainer
 
 from job_service.adapter import job_db
-from job_service.exceptions import NotFoundException
+from job_service.exceptions import JobExistsException, NotFoundException
 from job_service.model.job import Job, UserInfo
 from job_service.model.request import (
     GetJobRequest, NewJobRequest, UpdateJobRequest
@@ -113,6 +113,15 @@ def test_new_job(mocker: MockFixture):
     assert actual.created_by.dict() == USER_INFO.dict()
     assert actual.parameters.target == 'NEW_DATASET'
     assert actual.parameters.operation == 'ADD'
+    with pytest.raises(JobExistsException) as e:
+        assert job_db.new_job(
+            NewJobRequest(
+                operation='ADD',
+                target='NEW_DATASET'
+            ),
+            USER_INFO
+        ) is not None
+    assert 'NEW_DATASET already in progress' in str(e)
 
 
 def test_update_job(mocker: MockFixture):
