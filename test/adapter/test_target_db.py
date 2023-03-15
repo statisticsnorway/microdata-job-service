@@ -109,6 +109,7 @@ def teardown_module():
 
 def test_get_targets(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('targets')
+    DB_CLIENT.jobdb.inprogress.create_index('name', unique=True)
     DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[0].dict(by_alias=True))
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
 
@@ -121,6 +122,7 @@ def test_get_targets(mocker: MockFixture):
 
 def test_update_target(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('targets')
+    DB_CLIENT.jobdb.inprogress.create_index('name', unique=True)
     DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[0].dict(by_alias=True))
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
 
@@ -146,6 +148,7 @@ def test_update_target(mocker: MockFixture):
 
 def test_update_targets_bump(mocker: MockFixture):
     DB_CLIENT.jobdb.drop_collection('targets')
+    DB_CLIENT.jobdb.inprogress.create_index('name', unique=True)
     DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[0].dict(by_alias=True))
     DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[1].dict(by_alias=True))
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 2
