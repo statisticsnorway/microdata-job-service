@@ -94,14 +94,16 @@ def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> Job:
         )
     except DuplicateKeyError as e:
         raise JobExistsException(
-            f'Job with target {job.target} already in progress'
+            f'Job with target {job.parameters.target} already in progress'
         ) from e
     except Exception as e:
         raise e
     if update_result.upserted_id is None:
-        logger.error(f'Job with target {job.target} already in progress')
+        logger.error(
+            f'Job with target {job.parameters.target} already in progress'
+        )
         raise JobExistsException(
-            f'Job with target {job.target} already in progress'
+            f'Job with target {job.parameters.target} already in progress'
         )
     logger.info(f'Successfully inserted new job: {job}')
     return job

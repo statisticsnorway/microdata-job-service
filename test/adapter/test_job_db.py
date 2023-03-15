@@ -6,7 +6,7 @@ from pytest_mock import MockFixture
 from testcontainers.mongodb import MongoDbContainer
 
 from job_service.adapter import job_db
-from job_service.exceptions import NotFoundException
+from job_service.exceptions import JobExistsException, NotFoundException
 from job_service.model.job import Job, UserInfo
 from job_service.model.request import (
     GetJobRequest, NewJobRequest, UpdateJobRequest
@@ -45,9 +45,13 @@ def teardown_module():
     mongo.stop()
 
 
-def test_get_job(mocker: MockFixture):
+def setup_function():
     DB_CLIENT.jobdb.drop_collection('in_progress')
     DB_CLIENT.jobdb.drop_collection('completed')
+    DB_CLIENT.jobdb.inprogress.create_index('parameters.target', unique=True)
+
+
+def test_get_job(mocker: MockFixture):
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
@@ -68,8 +72,6 @@ def test_get_job(mocker: MockFixture):
 
 
 def test_get_jobs(mocker: MockFixture):
-    DB_CLIENT.jobdb.drop_collection('in_progress')
-    DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
@@ -87,8 +89,6 @@ def test_get_jobs(mocker: MockFixture):
 
 
 def test_new_job(mocker: MockFixture):
-    DB_CLIENT.jobdb.drop_collection('in_progress')
-    DB_CLIENT.jobdb.drop_collection('completed')
     mocker.patch.object(
         job_db, 'in_progress',
         DB_CLIENT.jobdb.in_progress
@@ -110,11 +110,18 @@ def test_new_job(mocker: MockFixture):
     assert actual.created_by.dict() == USER_INFO.dict()
     assert actual.parameters.target == 'NEW_DATASET'
     assert actual.parameters.operation == 'ADD'
+    with pytest.raises(JobExistsException) as e:
+        assert job_db.new_job(
+            NewJobRequest(
+                operation='ADD',
+                target='NEW_DATASET'
+            ),
+            USER_INFO
+        ) is not None
+    assert 'NEW_DATASET already in progress' in str(e)
 
 
 def test_update_job(mocker: MockFixture):
-    DB_CLIENT.jobdb.drop_collection('in_progress')
-    DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
@@ -157,8 +164,6 @@ def test_new_job_different_created_at():
 
 
 def test_update_job_completed(mocker: MockFixture):
-    DB_CLIENT.jobdb.drop_collection('in_progress')
-    DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
@@ -180,8 +185,6 @@ def test_update_job_completed(mocker: MockFixture):
 
 
 def test_update_job_failed(mocker: MockFixture):
-    DB_CLIENT.jobdb.drop_collection('in_progress')
-    DB_CLIENT.jobdb.drop_collection('completed')
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
