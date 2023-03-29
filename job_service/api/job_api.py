@@ -4,7 +4,6 @@ from flask import Blueprint, jsonify
 from flask_pydantic import validate
 
 from job_service.adapter import job_db, target_db
-from job_service.model.job import UserInfo
 from job_service.model.request import (
     NewJobsRequest, UpdateJobRequest, GetJobRequest
 )
@@ -28,14 +27,9 @@ def get_jobs(query: GetJobRequest):
 def new_job(body: NewJobsRequest):
     logger.info(f'POST /jobs with request body: {body}')
     response_list = []
-    user_info = UserInfo(
-        userId='123-123-123',
-        firstName='Data',
-        lastName='Admin'
-    )
     for job_request in body.jobs:
         try:
-            job = job_db.new_job(job_request, user_info)
+            job = job_db.new_job(job_request, body.user_info)
             response_list.append({
                 'status': 'queued',
                 'msg': 'CREATED',
