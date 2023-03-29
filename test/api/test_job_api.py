@@ -39,6 +39,7 @@ JOB_LIST = [
     )
 ]
 NEW_JOB_REQUEST = {
+    'userInfo': USER_INFO.dict(),
     'jobs': [
         {'operation': 'ADD', 'target': 'MY_DATASET'},
         {'operation': 'CHANGE', 'target': 'OTHER_DATASET'}

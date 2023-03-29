@@ -1,4 +1,9 @@
 {
+    "userInfo": {
+        "userId": "123-123-123",
+        "firstName": "Data",
+        "lastName": "Admin"
+    },
     "jobs": [
         {
             "operation": "ADD",
