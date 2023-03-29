@@ -86,6 +86,7 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
 
 
 class NewJobsRequest(CamelModel, extra=Extra.forbid):
+    user_info: UserInfo
     jobs: List[NewJobRequest]
 
 
