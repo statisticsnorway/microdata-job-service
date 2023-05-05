@@ -29,6 +29,9 @@ def init_json_logging():
 
 
 logger = logging.getLogger()
+
+logging.getLogger('flask-request-logger').disabled = True
+
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
