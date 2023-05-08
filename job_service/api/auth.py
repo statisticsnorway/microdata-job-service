@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Union
 
 import jwt
@@ -19,7 +18,7 @@ jwks_client = PyJWKClient(environment.get('JWKS_URL'), lifespan=3000)
 
 
 def get_jwks_aud() -> str:
-    return 'job-service-qa' if os.environ['STACK'] == 'qa' else 'job-service'
+    return 'datastore-qa' if environment.get('STACK') == 'qa' else 'datastore'
 
 
 def get_signing_key(jwt_token: str):
@@ -28,23 +27,23 @@ def get_signing_key(jwt_token: str):
 
 def authorize_user(token: Union[str, None]) -> UserInfo:
     if token is None:
-        raise Exception('Unauthorized. No token was provided')
+        raise AuthError('Unauthorized. No token was provided')
     try:
         signing_key = get_signing_key(token)
         decoded_jwt = jwt.decode(
             token,
             signing_key,
-            algorithms=["RS256", "RS512"]
-            # audience=get_jwks_aud()
+            algorithms=["RS256", "RS512"],
+            audience=get_jwks_aud()
         )
         user_id = str(decoded_jwt.get('user/uuid'))
         first_name = str(decoded_jwt.get('user/firstName'))
         last_name = str(decoded_jwt.get('user/lastName'))
-        if user_id in [None, '']:
+        if user_id in ['None', '']:
             raise NoUserError('No valid userId')
-        if first_name in [None, '']:
+        if first_name in ['None', '']:
             raise NoUserError('No valid firstName')
-        if last_name in [None, '']:
+        if last_name in ['None', '']:
             raise NoUserError('No valid lastName')
         return UserInfo(
             user_id=user_id,
@@ -61,6 +60,6 @@ def authorize_user(token: Union[str, None]) -> UserInfo:
         AttributeError,
         KeyError
     ) as e:
-        raise AuthError(f"Unauthorized {e}") from e
+        raise AuthError(f"Unauthorized: {e}") from e
     except Exception as e:
         raise Exception(f"Internal Server Error {e}") from e

@@ -7,7 +7,7 @@ from job_service.model.job import Job, UserInfo
 from job_service.model.request import NewJobsRequest, NewJobRequest
 
 
-RESOURCE_DIR = 'test/resources/model'
+RESOURCE_DIR = 'tests/resources/model'
 VALID_JOB_REQUESTS_PATH = f'{RESOURCE_DIR}/valid_job_requests.json'
 with open(VALID_JOB_REQUESTS_PATH, 'r', encoding='utf-8') as f:
     VALID_JOB_REQUESTS = json.load(f)
