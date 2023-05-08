@@ -36,19 +36,19 @@ def authorize_user(token: Union[str, None]) -> UserInfo:
             algorithms=["RS256", "RS512"],
             audience=get_jwks_aud()
         )
-        user_id = str(decoded_jwt.get('user/uuid'))
-        first_name = str(decoded_jwt.get('user/firstName'))
-        last_name = str(decoded_jwt.get('user/lastName'))
-        if user_id in ['None', '']:
+        user_id = decoded_jwt.get('user/uuid')
+        first_name = decoded_jwt.get('user/firstName')
+        last_name = decoded_jwt.get('user/lastName')
+        if user_id in [None, '']:
             raise NoUserError('No valid userId')
-        if first_name in ['None', '']:
+        if first_name in [None, '']:
             raise NoUserError('No valid firstName')
-        if last_name in ['None', '']:
+        if last_name in [None, '']:
             raise NoUserError('No valid lastName')
         return UserInfo(
-            user_id=user_id,
-            first_name=first_name,
-            last_name=last_name
+            user_id=str(user_id),
+            first_name=str(first_name),
+            last_name=str(last_name)
         )
     except (
         InvalidSignatureError,
