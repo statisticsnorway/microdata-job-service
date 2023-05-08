@@ -2,14 +2,14 @@ import logging
 from typing import Union
 
 import jwt
-from jwt import PyJWKClient
+from jwt import MissingRequiredClaimError, PyJWKClient
 from jwt.exceptions import (
     InvalidSignatureError, ExpiredSignatureError,
     InvalidAudienceError, DecodeError
 )
 
 from job_service.config import environment
-from job_service.exceptions import AuthError, NoUserError
+from job_service.exceptions import AuthError
 from job_service.model.job import UserInfo
 
 
@@ -34,27 +34,37 @@ def authorize_user(token: Union[str, None]) -> UserInfo:
             token,
             signing_key,
             algorithms=["RS256", "RS512"],
-            audience=get_jwks_aud()
+            audience=get_jwks_aud(),
+            options={
+                'require': [
+                    'aud',
+                    'sub',
+                    'accreditation/role',
+                    'user/uuid',
+                    'user/firstName',
+                    'user/lastName'
+                ]
+            }
         )
+        role = decoded_jwt.get('accreditation/role')
+        if role != 'role/dataadministrator':
+            raise AuthError(f'Can\'t start job with role: {role}')
+
         user_id = decoded_jwt.get('user/uuid')
         first_name = decoded_jwt.get('user/firstName')
         last_name = decoded_jwt.get('user/lastName')
-        if user_id in [None, '']:
-            raise NoUserError('No valid userId')
-        if first_name in [None, '']:
-            raise NoUserError('No valid firstName')
-        if last_name in [None, '']:
-            raise NoUserError('No valid lastName')
         return UserInfo(
             user_id=str(user_id),
             first_name=str(first_name),
             last_name=str(last_name)
         )
+    except AuthError as e:
+        raise e
     except (
         InvalidSignatureError,
         ExpiredSignatureError,
         InvalidAudienceError,
-        NoUserError,
+        MissingRequiredClaimError,
         DecodeError,
         ValueError,
         AttributeError,

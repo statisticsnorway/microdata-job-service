@@ -14,9 +14,5 @@ class BadQueryException(Exception):
     ...
 
 
-class NoUserError(Exception):
-    ...
-
-
 class AuthError(Exception):
     ...

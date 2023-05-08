@@ -42,7 +42,7 @@ def test_auth_no_user_id():
             test_data.jwt_payload_no_user_id, JWT_PRIVATE_KEY
         )
         auth.authorize_user(token)
-    assert "No valid userId" in str(e)
+    assert 'Token is missing the "user/uuid" claim' in str(e)
 
 
 def test_auth_no_first_name():
@@ -51,7 +51,7 @@ def test_auth_no_first_name():
             test_data.jwt_payload_no_first_name, JWT_PRIVATE_KEY
         )
         auth.authorize_user(token)
-    assert "No valid firstName" in str(e)
+    assert 'Token is missing the "user/firstName" claim' in str(e)
 
 
 def test_auth_no_last_name():
@@ -60,7 +60,16 @@ def test_auth_no_last_name():
             test_data.jwt_payload_no_last_name, JWT_PRIVATE_KEY
         )
         auth.authorize_user(token)
-    assert "No valid lastName" in str(e)
+    assert 'Token is missing the "user/lastName" claim' in str(e)
+
+
+def test_auth_wrong_role():
+    with pytest.raises(AuthError) as e:
+        token = encode_jwt_payload(
+            test_data.jwt_payload_wrong_accreditation, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(token)
+    assert 'Can\'t start job with role: role/researcher' in str(e)
 
 
 def test_auth_expired_token():
