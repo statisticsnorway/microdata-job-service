@@ -12,3 +12,7 @@ class NoSuchImportableDataset(Exception):
 
 class BadQueryException(Exception):
     ...
+
+
+class AuthError(Exception):
+    ...

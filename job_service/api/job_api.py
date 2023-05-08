@@ -1,10 +1,10 @@
 import logging
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_pydantic import validate
 
+from job_service.api import auth
 from job_service.adapter import job_db, target_db
-from job_service.model.job import UserInfo
 from job_service.model.request import (
     NewJobsRequest, UpdateJobRequest, GetJobRequest
 )
@@ -27,12 +27,8 @@ def get_jobs(query: GetJobRequest):
 @validate()
 def new_job(body: NewJobsRequest):
     logger.info(f'POST /jobs with request body: {body}')
+    user_info = auth.authorize_user(request.cookies.get('authorization'))
     response_list = []
-    user_info = UserInfo(
-        userId='123-123-123',
-        firstName='Data',
-        lastName='Admin'
-    )
     for job_request in body.jobs:
         try:
             job = job_db.new_job(job_request, user_info)

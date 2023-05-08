@@ -5,7 +5,7 @@ import pytest
 from job_service.model.job import Job
 
 
-RESOURCE_DIR = 'test/resources/model'
+RESOURCE_DIR = 'tests/resources/model'
 with open(f'{RESOURCE_DIR}/valid_jobs.json', encoding='utf-8') as f:
     VALID_JOBS = json.load(f)
 with open(f'{RESOURCE_DIR}/invalid_jobs.json', encoding='utf-8') as f:

@@ -10,7 +10,7 @@ from job_service.api.job_api import job_api
 from job_service.api.targets_api import targets_api
 from job_service.api.importable_datasets_api import importable_datasets_api
 from job_service.exceptions import (
-    JobExistsException, NotFoundException
+    AuthError, JobExistsException, NotFoundException
 )
 from job_service.config.logging import (
     CustomJSONLog, CustomJSONRequestLogFormatter
@@ -59,6 +59,12 @@ def handle_bad_request(e):
 def handle_job_exists(e):
     logger.exception(e)
     return {"message": str(e)}, 400
+
+
+@app.errorhandler(AuthError)
+def handle_auth_error(e):
+    logger.exception(e)
+    return {"message": str(e)}, 401
 
 
 @app.errorhandler(Exception)

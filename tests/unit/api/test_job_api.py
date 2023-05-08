@@ -1,6 +1,10 @@
+from datetime import datetime, timedelta
+
 from flask import url_for
 from pytest_mock import MockFixture
 
+from tests import util
+from job_service.api import auth
 from job_service.exceptions import NotFoundException
 from job_service.adapter import job_db, target_db
 from job_service.model.job import Job, UserInfo
@@ -93,6 +97,9 @@ def test_get_job_not_found(flask_app, mocker: MockFixture):
 
 
 def test_new_job(flask_app, mocker: MockFixture):
+    auth_mock = mocker.patch.object(
+        auth, 'authorize_user', return_value=UserInfo(**USER_INFO_DICT)
+    )
     new_job = mocker.patch.object(
         job_db, 'new_job', return_value=JOB_LIST[0]
     )
