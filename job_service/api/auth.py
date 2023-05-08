@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Union
 
 import jwt
 from jwt import PyJWKClient
@@ -25,7 +26,7 @@ def get_signing_key(jwt_token: str):
     return jwks_client.get_signing_key_from_jwt(jwt_token).key
 
 
-def authorize_user(token: str) -> UserInfo:
+def authorize_user(token: Union[str, None]) -> UserInfo:
     if token is None:
         raise Exception('Unauthorized. No token was provided')
     try:
