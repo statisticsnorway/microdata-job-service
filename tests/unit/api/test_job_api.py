@@ -1,6 +1,8 @@
 from flask import url_for
+from datetime import datetime, timedelta
 from pytest_mock import MockFixture
 
+from tests import util
 from job_service.exceptions import NotFoundException
 from job_service.adapter import job_db, target_db
 from job_service.model.job import Job, UserInfo
@@ -47,6 +49,15 @@ NEW_JOB_REQUEST = {
 UPDATE_JOB_REQUEST = {
     'status': 'initiated',
     'log': 'extra logging'
+}
+VALID_JWT_PAYLOAD = {
+    'aud': ['no.ssb.fdb', 'datastore'],
+    'exp': (datetime.now() + timedelta(hours=1)).timestamp(),
+    'accreditation/role': 'role/dataadministrator',
+    'sub': 'testuser',
+    'user/uuid': '123-123-123',
+    'user/firstName': 'Data',
+    'user/lastName': 'Admin'
 }
 
 
