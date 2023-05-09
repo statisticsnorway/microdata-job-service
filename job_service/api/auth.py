@@ -26,6 +26,13 @@ def get_signing_key(jwt_token: str):
 
 
 def authorize_user(token: Union[str, None]) -> UserInfo:
+    if not environment.get('JWT_AUTH'):
+        logger.warning('JWT_AUTH is turned off.')
+        return UserInfo(
+            user_id="1234-1234-1234-1234",
+            first_name="Test",
+            last_name="User"
+        )
     if token is None:
         raise AuthError('Unauthorized. No token was provided')
     try:
