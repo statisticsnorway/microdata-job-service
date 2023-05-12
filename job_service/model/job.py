@@ -41,37 +41,28 @@ class JobParameters(CamelModel, use_enum_values=True):
     @root_validator(skip_on_failure=True)
     @classmethod
     def validate_job_type(cls, values):
-        operation: Operation = values.get('operation')
-        if (
-            operation == Operation.BUMP
-            and (
-                values.get('bump_manifesto') is None or
-                values.get('description') is None or
-                values.get('bump_from_version') is None or
-                values.get('bump_to_version') is None or
-                values.get('target') != 'DATASTORE'
-            )
+        operation: Operation = values.get("operation")
+        if operation == Operation.BUMP and (
+            values.get("bump_manifesto") is None
+            or values.get("description") is None
+            or values.get("bump_from_version") is None
+            or values.get("bump_to_version") is None
+            or values.get("target") != "DATASTORE"
         ):
-            raise ValueError(
-                'Invalid or missing arguments for BUMP operation'
-            )
+            raise ValueError("Invalid or missing arguments for BUMP operation")
         elif (
-            operation == Operation.REMOVE
-            and values.get('description') is None
+            operation == Operation.REMOVE and values.get("description") is None
         ):
-            raise ValueError(
-                'Missing parameters for REMOVE operation'
-            )
+            raise ValueError("Missing parameters for REMOVE operation")
         elif (
             operation == Operation.SET_STATUS
-            and values.get('release_status') is None
+            and values.get("release_status") is None
         ):
-            raise ValueError(
-                'Missing parameters for SET STATUS operation'
-            )
+            raise ValueError("Missing parameters for SET STATUS operation")
         else:
             return {
-                key: value for key, value in values.items()
+                key: value
+                for key, value in values.items()
                 if value is not None
             }
 
@@ -80,8 +71,8 @@ class Log(CamelModel, extra=Extra.forbid):
     at: datetime
     message: str
 
-    def dict(self, **kwargs):   # pylint: disable=unused-argument
-        return {'at': self.at.isoformat(), 'message': self.message}
+    def dict(self, **kwargs):  # pylint: disable=unused-argument
+        return {"at": self.at.isoformat(), "message": self.message}
 
 
 class Job(CamelModel, use_enum_values=True):
@@ -95,25 +86,27 @@ class Job(CamelModel, use_enum_values=True):
     @root_validator(skip_on_failure=True)
     @classmethod
     def validate_job_type(cls, values):
-        if values['log'] is None:
-            values['log'] = [{
-                'at': datetime.datetime.now(),
-                'message': 'Job generated and queued'
-            }]
+        if values["log"] is None:
+            values["log"] = [
+                {
+                    "at": datetime.datetime.now(),
+                    "message": "Job generated and queued",
+                }
+            ]
         return values
 
     def get_action(self) -> list[str]:
-        match(self.parameters.operation):
-            case 'SET_STATUS':
+        match (self.parameters.operation):
+            case "SET_STATUS":
                 return [
                     self.parameters.operation,
-                    self.parameters.release_status
+                    self.parameters.release_status,
                 ]
-            case 'BUMP':
+            case "BUMP":
                 return [
                     self.parameters.operation,
                     self.parameters.bump_from_version,
-                    self.parameters.bump_to_version
+                    self.parameters.bump_to_version,
                 ]
             case _:
                 return [self.parameters.operation]

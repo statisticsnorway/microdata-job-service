@@ -10,17 +10,20 @@ from job_service.api.job_api import job_api
 from job_service.api.targets_api import targets_api
 from job_service.api.importable_datasets_api import importable_datasets_api
 from job_service.exceptions import (
-    AuthError, JobExistsException, NotFoundException
+    AuthError,
+    JobExistsException,
+    NotFoundException,
 )
 from job_service.config.logging import (
-    CustomJSONLog, CustomJSONRequestLogFormatter
+    CustomJSONLog,
+    CustomJSONRequestLogFormatter,
 )
 
 
 def init_json_logging():
     json_logging.CREATE_CORRELATION_ID_IF_NOT_EXISTS = True
-    json_logging.CORRELATION_ID_GENERATOR = (
-        lambda: "job-service-" + str(uuid.uuid1())
+    json_logging.CORRELATION_ID_GENERATOR = lambda: "job-service-" + str(
+        uuid.uuid1()
     )
     json_logging.init_flask(enable_json=True, custom_formatter=CustomJSONLog)
     json_logging.init_request_instrument(
@@ -30,7 +33,7 @@ def init_json_logging():
 
 logger = logging.getLogger()
 
-logging.getLogger('flask-request-logger').disabled = True
+logging.getLogger("flask-request-logger").disabled = True
 
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
