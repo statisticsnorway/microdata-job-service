@@ -4,8 +4,10 @@ from typing import Union
 import jwt
 from jwt import MissingRequiredClaimError, PyJWKClient
 from jwt.exceptions import (
-    InvalidSignatureError, ExpiredSignatureError,
-    InvalidAudienceError, DecodeError
+    InvalidSignatureError,
+    ExpiredSignatureError,
+    InvalidAudienceError,
+    DecodeError,
 )
 
 from job_service.config import environment
@@ -14,11 +16,11 @@ from job_service.model.job import UserInfo
 
 
 logger = logging.getLogger()
-jwks_client = PyJWKClient(environment.get('JWKS_URL'), lifespan=3000)
+jwks_client = PyJWKClient(environment.get("JWKS_URL"), lifespan=3000)
 
 
 def get_jwks_aud() -> str:
-    return 'datastore-qa' if environment.get('STACK') == 'qa' else 'datastore'
+    return "datastore-qa" if environment.get("STACK") == "qa" else "datastore"
 
 
 def get_signing_key(jwt_token: str):
@@ -26,15 +28,13 @@ def get_signing_key(jwt_token: str):
 
 
 def authorize_user(token: Union[str, None]) -> UserInfo:
-    if not environment.get('JWT_AUTH'):
-        logger.warning('JWT_AUTH is turned off.')
+    if not environment.get("JWT_AUTH"):
+        logger.warning("JWT_AUTH is turned off.")
         return UserInfo(
-            user_id="1234-1234-1234-1234",
-            first_name="Test",
-            last_name="User"
+            user_id="1234-1234-1234-1234", first_name="Test", last_name="User"
         )
     if token is None:
-        raise AuthError('Unauthorized. No token was provided')
+        raise AuthError("Unauthorized. No token was provided")
     try:
         signing_key = get_signing_key(token)
         decoded_jwt = jwt.decode(
@@ -43,27 +43,27 @@ def authorize_user(token: Union[str, None]) -> UserInfo:
             algorithms=["RS256", "RS512"],
             audience=get_jwks_aud(),
             options={
-                'require': [
-                    'aud',
-                    'sub',
-                    'accreditation/role',
-                    'user/uuid',
-                    'user/firstName',
-                    'user/lastName'
+                "require": [
+                    "aud",
+                    "sub",
+                    "accreditation/role",
+                    "user/uuid",
+                    "user/firstName",
+                    "user/lastName",
                 ]
-            }
+            },
         )
-        role = decoded_jwt.get('accreditation/role')
-        if role != 'role/dataadministrator':
-            raise AuthError(f'Can\'t start job with role: {role}')
+        role = decoded_jwt.get("accreditation/role")
+        if role != "role/dataadministrator":
+            raise AuthError(f"Can't start job with role: {role}")
 
-        user_id = decoded_jwt.get('user/uuid')
-        first_name = decoded_jwt.get('user/firstName')
-        last_name = decoded_jwt.get('user/lastName')
+        user_id = decoded_jwt.get("user/uuid")
+        first_name = decoded_jwt.get("user/firstName")
+        last_name = decoded_jwt.get("user/lastName")
         return UserInfo(
             user_id=str(user_id),
             first_name=str(first_name),
-            last_name=str(last_name)
+            last_name=str(last_name),
         )
     except AuthError as e:
         raise e
@@ -75,7 +75,7 @@ def authorize_user(token: Union[str, None]) -> UserInfo:
         DecodeError,
         ValueError,
         AttributeError,
-        KeyError
+        KeyError,
     ) as e:
         raise AuthError(f"Unauthorized: {e}") from e
     except Exception as e:

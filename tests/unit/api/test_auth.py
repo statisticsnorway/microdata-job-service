@@ -11,25 +11,19 @@ JWT_PRIVATE_KEY, JWT_PUBLIC_KEY = generate_rsa_key_pairs()
 JWT_INVALID_PRIVATE_KEY, _ = generate_rsa_key_pairs()
 
 expected_user_info = UserInfo(
-    user_id='1234-1234-1234-1234',
-    first_name='Test',
-    last_name='Brukersen'
+    user_id="1234-1234-1234-1234", first_name="Test", last_name="Brukersen"
 )
 
 
 @pytest.fixture(autouse=True)
 def setup(monkeypatch: MonkeyPatch):
     monkeypatch.setattr(
-        auth,
-        'get_signing_key',
-        lambda *a: JWT_PUBLIC_KEY.decode('utf-8')
+        auth, "get_signing_key", lambda *a: JWT_PUBLIC_KEY.decode("utf-8")
     )
 
 
 def test_auth_valid_token():
-    token = encode_jwt_payload(
-        test_data.valid_jwt_payload, JWT_PRIVATE_KEY
-    )
+    token = encode_jwt_payload(test_data.valid_jwt_payload, JWT_PRIVATE_KEY)
     actual_user_info = auth.authorize_user(token)
     assert actual_user_info.user_id == expected_user_info.user_id
     assert actual_user_info.first_name == expected_user_info.first_name
@@ -69,7 +63,7 @@ def test_auth_wrong_role():
             test_data.jwt_payload_wrong_accreditation, JWT_PRIVATE_KEY
         )
         auth.authorize_user(token)
-    assert 'Can\'t start job with role: role/researcher' in str(e)
+    assert "Can't start job with role: role/researcher" in str(e)
 
 
 def test_auth_expired_token():

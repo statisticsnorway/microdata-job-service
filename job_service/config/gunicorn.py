@@ -12,7 +12,9 @@ class CustomLogger(glogging.Logger):
 
         # Override Gunicorn's `error_log` configuration.
         self._set_handler(
-            self.error_log, cfg.errorlog, logging.Formatter(
+            self.error_log,
+            cfg.errorlog,
+            logging.Formatter(
                 fmt=(
                     '{"@timestamp": "%(asctime)s",'
                     '"pid": "%(process)d", '
@@ -24,6 +26,6 @@ class CustomLogger(glogging.Logger):
                     '"xRequestId": "TODO",'
                     '"message": "%(message)s}"'
                 ),
-                datefmt='%Y-%m-%dT%H:%M:%SZ'
-            )
+                datefmt="%Y-%m-%dT%H:%M:%SZ",
+            ),
         )

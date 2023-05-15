@@ -5,8 +5,8 @@ from typing import List
 from job_service.model.importable_dataset import ImportableDataset
 from job_service.config import environment
 
-INPUT_DIR = Path(environment.get('INPUT_DIR'))
-ARCHIVE_DIR = INPUT_DIR / 'archive'
+INPUT_DIR = Path(environment.get("INPUT_DIR"))
+ARCHIVE_DIR = INPUT_DIR / "archive"
 
 
 def get_importable_datasets() -> List[ImportableDataset]:
@@ -14,16 +14,16 @@ def get_importable_datasets() -> List[ImportableDataset]:
     Returns names of all valid datasets in input directory.
     """
     datasets = [
-        importable_dataset for importable_dataset in
-        [
+        importable_dataset
+        for importable_dataset in [
             ImportableDataset(
                 dataset_name=dataset_name,
                 has_data=os.path.exists(
-                    INPUT_DIR / f'{dataset_name}/{dataset_name}.csv'
+                    INPUT_DIR / f"{dataset_name}/{dataset_name}.csv"
                 ),
                 has_metadata=os.path.exists(
-                    INPUT_DIR / f'{dataset_name}/{dataset_name}.json'
-                )
+                    INPUT_DIR / f"{dataset_name}/{dataset_name}.json"
+                ),
             )
             for dataset_name in os.listdir(INPUT_DIR)
         ]
@@ -32,17 +32,17 @@ def get_importable_datasets() -> List[ImportableDataset]:
 
     if ARCHIVE_DIR.exists():
         datasets = datasets + [
-            archived_dataset for archived_dataset in
-            [
+            archived_dataset
+            for archived_dataset in [
                 ImportableDataset(
                     dataset_name=dataset_name,
                     has_data=os.path.exists(
-                        ARCHIVE_DIR / f'{dataset_name}/{dataset_name}.csv'
+                        ARCHIVE_DIR / f"{dataset_name}/{dataset_name}.csv"
                     ),
                     has_metadata=os.path.exists(
-                        ARCHIVE_DIR / f'{dataset_name}/{dataset_name}.json'
+                        ARCHIVE_DIR / f"{dataset_name}/{dataset_name}.json"
                     ),
-                    is_archived=True
+                    is_archived=True,
                 )
                 for dataset_name in os.listdir(ARCHIVE_DIR)
             ]
