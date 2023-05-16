@@ -29,7 +29,9 @@ def get_jobs(query: GetJobRequest):
 @validate()
 def new_job(body: NewJobsRequest):
     logger.info(f"POST /jobs with request body: {body}")
-    user_info = auth.authorize_user(request.cookies.get("authorization"))
+    user_info = auth.authorize_user(
+        request.cookies.get("authorization"), request.cookies.get("user-info")
+    )
     response_list = []
     for job_request in body.jobs:
         try:
