@@ -22,60 +22,93 @@ def setup(monkeypatch: MonkeyPatch):
     )
 
 
-def test_auth_valid_token():
-    token = encode_jwt_payload(test_data.valid_jwt_payload, JWT_PRIVATE_KEY)
-    actual_user_info = auth.authorize_user(token)
+def test_auth_valid_tokens():
+    auth_token = encode_jwt_payload(
+        test_data.valid_authorization_payload, JWT_PRIVATE_KEY
+    )
+    user_info_token = encode_jwt_payload(
+        test_data.valid_user_info_payload, JWT_PRIVATE_KEY
+    )
+    actual_user_info = auth.authorize_user(auth_token, user_info_token)
     assert actual_user_info.user_id == expected_user_info.user_id
     assert actual_user_info.first_name == expected_user_info.first_name
     assert actual_user_info.last_name == expected_user_info.last_name
 
 
-def test_auth_no_user_id():
+def test_user_info_no_user_id():
     with pytest.raises(AuthError) as e:
-        token = encode_jwt_payload(
-            test_data.jwt_payload_no_user_id, JWT_PRIVATE_KEY
+        auth_token = encode_jwt_payload(
+            test_data.authorization_payload_no_user_id, JWT_PRIVATE_KEY
         )
-        auth.authorize_user(token)
+        user_info_token = encode_jwt_payload(
+            test_data.valid_user_info_payload, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(auth_token, user_info_token)
     assert 'Token is missing the "user/uuid" claim' in str(e)
-
-
-def test_auth_no_first_name():
-    with pytest.raises(AuthError) as e:
-        token = encode_jwt_payload(
-            test_data.jwt_payload_no_first_name, JWT_PRIVATE_KEY
-        )
-        auth.authorize_user(token)
-    assert 'Token is missing the "user/firstName" claim' in str(e)
-
-
-def test_auth_no_last_name():
-    with pytest.raises(AuthError) as e:
-        token = encode_jwt_payload(
-            test_data.jwt_payload_no_last_name, JWT_PRIVATE_KEY
-        )
-        auth.authorize_user(token)
-    assert 'Token is missing the "user/lastName" claim' in str(e)
 
 
 def test_auth_wrong_role():
     with pytest.raises(AuthError) as e:
-        token = encode_jwt_payload(
-            test_data.jwt_payload_wrong_accreditation, JWT_PRIVATE_KEY
+        auth_token = encode_jwt_payload(
+            test_data.authorization_payload_wrong_accreditation,
+            JWT_PRIVATE_KEY,
         )
-        auth.authorize_user(token)
+        user_info_token = encode_jwt_payload(
+            test_data.valid_user_info_payload, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(auth_token, user_info_token)
     assert "Can't start job with role: role/researcher" in str(e)
 
 
 def test_auth_expired_token():
     with pytest.raises(AuthError) as e:
-        token = encode_jwt_payload(
-            test_data.jwt_payload_expired, JWT_PRIVATE_KEY
+        auth_token = encode_jwt_payload(
+            test_data.authorization_payload_expired, JWT_PRIVATE_KEY
         )
-        auth.authorize_user(token)
+        user_info_token = encode_jwt_payload(
+            test_data.valid_user_info_payload, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(auth_token, user_info_token)
     assert "Signature has expired" in str(e)
 
 
-def test_auth_missing_token():
+def test_user_info_no_first_name():
     with pytest.raises(AuthError) as e:
-        auth.authorize_user(None)
-    assert "Unauthorized. No token was provided" in str(e)
+        auth_token = encode_jwt_payload(
+            test_data.valid_authorization_payload, JWT_PRIVATE_KEY
+        )
+        user_info_token = encode_jwt_payload(
+            test_data.user_info_payload_no_first_name, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(auth_token, user_info_token)
+    assert 'Token is missing the "user/firstName" claim' in str(e)
+
+
+def test_auth_no_last_name():
+    with pytest.raises(AuthError) as e:
+        auth_token = encode_jwt_payload(
+            test_data.valid_authorization_payload, JWT_PRIVATE_KEY
+        )
+        user_info_token = encode_jwt_payload(
+            test_data.user_info_payload_no_last_name, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(auth_token, user_info_token)
+    assert 'Token is missing the "user/lastName" claim' in str(e)
+
+
+def test_auth_missing_auth_token():
+    with pytest.raises(AuthError) as e:
+        user_info_token = encode_jwt_payload(
+            test_data.valid_user_info_payload, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(None, user_info_token)
+    assert "Unauthorized. No authorization token was provided" in str(e)
+
+
+def test_auth_missing_user_info_token():
+    with pytest.raises(AuthError) as e:
+        auth_token = encode_jwt_payload(
+            test_data.valid_authorization_payload, JWT_PRIVATE_KEY
+        )
+        auth.authorize_user(auth_token, None)
+    assert "Unauthorized. No user info token was provided" in str(e)
