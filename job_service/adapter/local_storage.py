@@ -10,32 +10,17 @@ INPUT_DIR = Path(environment.get("INPUT_DIR"))
 ARCHIVE_DIR = INPUT_DIR / "archive"
 
 
-def _has_data(tar, dataset_name):
-    chunks_count = len(
-        [
-            name
-            for name in tar.getnames()
-            if name.startswith("chunks/") and name.endswith(".csv.encr")
-        ]
-    )
-    data_files = [
-        f"{dataset_name}.symkey.encr",
-        f"{dataset_name}.md5",
-        "chunks",
-    ] + [f"chunks/{i}.csv.encr" for i in range(1, chunks_count + 1)]
-    return _dataset_files_exists(tar, data_files)
+def _has_data(tar: tarfile.TarFile) -> bool:
+    return "chunks" in tar.getnames()
 
 
-def _has_metadata(tar, dataset_name):
-    return _dataset_files_exists(tar, [f"{dataset_name}.json"])
+def _has_metadata(tar: tarfile.TarFile, dataset_name: str) -> bool:
+    return f"{dataset_name}.json" in tar.getnames()
 
 
-def _dataset_files_exists(tar, file_names):
-    tar_files = tar.getnames()
-    return all(file_name in tar_files for file_name in file_names)
-
-
-def get_datasets_in_directory(dir_path, is_archived=False):
+def get_datasets_in_directory(
+    dir_path: Path, is_archived: bool = False
+) -> List[ImportableDataset]:
     datasets = []
 
     for item in os.listdir(dir_path):
@@ -46,7 +31,7 @@ def get_datasets_in_directory(dir_path, is_archived=False):
             tar = tarfile.open(item_path)
             importable_dataset = ImportableDataset(
                 dataset_name=dataset_name,
-                has_data=_has_data(tar, dataset_name),
+                has_data=_has_data(tar),
                 has_metadata=_has_metadata(tar, dataset_name),
                 is_archived=is_archived,
             )
