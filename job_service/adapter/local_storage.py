@@ -1,4 +1,5 @@
 import os
+import tarfile
 from pathlib import Path
 from typing import List
 
@@ -9,44 +10,42 @@ INPUT_DIR = Path(environment.get("INPUT_DIR"))
 ARCHIVE_DIR = INPUT_DIR / "archive"
 
 
+def _has_data(tar: tarfile.TarFile) -> bool:
+    return "chunks" in tar.getnames()
+
+
+def _has_metadata(tar: tarfile.TarFile, dataset_name: str) -> bool:
+    return f"{dataset_name}.json" in tar.getnames()
+
+
+def get_datasets_in_directory(
+    dir_path: Path, is_archived: bool = False
+) -> List[ImportableDataset]:
+    datasets = []
+
+    for item in os.listdir(dir_path):
+        item_path = dir_path / item
+        dataset_name, ext = os.path.splitext(item)
+
+        if ext == ".tar" and tarfile.is_tarfile(item_path):
+            tar = tarfile.open(item_path)
+            importable_dataset = ImportableDataset(
+                dataset_name=dataset_name,
+                has_data=_has_data(tar),
+                has_metadata=_has_metadata(tar, dataset_name),
+                is_archived=is_archived,
+            )
+            if importable_dataset.has_metadata:
+                datasets.append(importable_dataset)
+
+    return datasets
+
+
 def get_importable_datasets() -> List[ImportableDataset]:
     """
     Returns names of all valid datasets in input directory.
     """
-    datasets = [
-        importable_dataset
-        for importable_dataset in [
-            ImportableDataset(
-                dataset_name=dataset_name,
-                has_data=os.path.exists(
-                    INPUT_DIR / f"{dataset_name}/{dataset_name}.csv"
-                ),
-                has_metadata=os.path.exists(
-                    INPUT_DIR / f"{dataset_name}/{dataset_name}.json"
-                ),
-            )
-            for dataset_name in os.listdir(INPUT_DIR)
-        ]
-        if importable_dataset.has_metadata
-    ]
-
+    datasets = get_datasets_in_directory(INPUT_DIR)
     if ARCHIVE_DIR.exists():
-        datasets = datasets + [
-            archived_dataset
-            for archived_dataset in [
-                ImportableDataset(
-                    dataset_name=dataset_name,
-                    has_data=os.path.exists(
-                        ARCHIVE_DIR / f"{dataset_name}/{dataset_name}.csv"
-                    ),
-                    has_metadata=os.path.exists(
-                        ARCHIVE_DIR / f"{dataset_name}/{dataset_name}.json"
-                    ),
-                    is_archived=True,
-                )
-                for dataset_name in os.listdir(ARCHIVE_DIR)
-            ]
-            if archived_dataset.has_metadata
-        ]
-
+        datasets += get_datasets_in_directory(ARCHIVE_DIR, is_archived=True)
     return datasets
