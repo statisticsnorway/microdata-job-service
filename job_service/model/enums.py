@@ -5,6 +5,7 @@ class JobStatus(str, Enum):
     QUEUED = "queued"
     INITIATED = "initiated"
     VALIDATING = "validating"
+    DECRYPTING = "decrypting"
     TRANSFORMING = "transforming"
     PSEUDONYMIZING = "pseudonymizing"
     ENRICHING = "enriching"
