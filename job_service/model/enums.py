@@ -8,8 +8,9 @@ class JobStatus(str, Enum):
     DECRYPTING = "decrypting"
     TRANSFORMING = "transforming"
     PSEUDONYMIZING = "pseudonymizing"
-    ENRICHING = "enriching"
-    CONVERTING = "converting"
+    ENRICHING = "enriching"  # legacy
+    CONVERTING = "converting"  # legacy
+    PARTITIONING = "partitioning"
     BUILT = "built"
     IMPORTING = "importing"
     COMPLETED = "completed"
