@@ -1,12 +1,9 @@
-from datetime import datetime, timedelta
-
 from flask import url_for
 from pytest_mock import MockFixture
 
-from tests import util
+from job_service.adapter import job_db, target_db, maintenance_db
 from job_service.api import auth
 from job_service.exceptions import NotFoundException
-from job_service.adapter import job_db, target_db
 from job_service.model.job import Job, UserInfo
 from job_service.model.request import NewJobRequest, UpdateJobRequest
 
@@ -78,6 +75,7 @@ def test_get_job_not_found(flask_app, mocker: MockFixture):
 
 
 def test_new_job(flask_app, mocker: MockFixture):
+    mocker.patch.object(maintenance_db, "is_upgrade_in_progress", return_value=False)
     auth_mock = mocker.patch.object(
         auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
     )
@@ -96,6 +94,20 @@ def test_new_job(flask_app, mocker: MockFixture):
     assert response.json == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
+    ]
+
+
+def test_new_job_while_upgrade_is_in_progress(flask_app, mocker: MockFixture):
+    mocker.patch.object(maintenance_db, "is_upgrade_in_progress", return_value=True)
+    auth_mock = mocker.patch.object(
+        auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
+    )
+    new_job = mocker.patch.object(job_db, "new_job", return_value=JOB_LIST[0])
+    response = flask_app.post(url_for("job_api.new_job"), json=NEW_JOB_REQUEST)
+    assert new_job.call_count == 0
+    assert response.status_code == 200
+    assert response.json == [
+        {"msg": "UPGRADE_IN_PROGRESS", "status": "FAILED"}
     ]
 
 

@@ -149,6 +149,34 @@ _____
 >
 ></details>
 _____
+> ### **[POST]** `/prepare-for-upgrade`
+>Sets a flagg that prevents receiving new jobs.
+>This will typically be the case when new versions of containers are about to be deployed.
+><details>
+>  <summary>Responses</summary>
+>
+>  | status | json                                                                                        |
+>  |--------|---------------------------------------------------------------------------------------------|
+>  |   200  |```{"status": "SUCCESS", "msg": "PREPARE_FOR_UPGRADE"}``` |
+>  |   400  |```{"message": "<Error message>"}```                                                         |
+>  |   500  |```{"message": "<Error message>"}```                                                         |
+>
+></details>
+_____
+> ### **[POST]** `/upgrade-done`
+>Unsets a flagg that prevents receiving new jobs.
+>This will typically be the case when deploy is done and job service will start receiving new jobs.
+><details>
+>  <summary>Responses</summary>
+>
+>  | status | json                                                                                        |
+>  |--------|---------------------------------------------------------------------------------------------|
+>  |   200  |```{"status": "SUCCESS", "msg": "UPGRADE_DONE"}``` |
+>  |   400  |```{"message": "<Error message>"}```                                                         |
+>  |   500  |```{"message": "<Error message>"}```                                                         |
+>
+></details>
+_____
 </br>
 </br>
 

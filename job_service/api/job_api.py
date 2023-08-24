@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_pydantic import validate
 
 from job_service.api import auth
-from job_service.adapter import job_db, target_db
+from job_service.adapter import job_db, target_db, maintenance_db
 from job_service.model.request import (
     NewJobsRequest,
     UpdateJobRequest,
@@ -33,16 +33,21 @@ def new_job(body: NewJobsRequest):
         request.cookies.get("authorization"), request.cookies.get("user-info")
     )
     response_list = []
-    for job_request in body.jobs:
-        try:
-            job = job_db.new_job(job_request, user_info)
-            response_list.append(
-                {"status": "queued", "msg": "CREATED", "job_id": job.job_id}
-            )
-            target_db.update_target(job)
-        except Exception as e:
-            logger.exception(e)
-            response_list.append({"status": "FAILED", "msg": "FAILED"})
+    if not maintenance_db.is_upgrade_in_progress():
+        for job_request in body.jobs:
+            try:
+                job = job_db.new_job(job_request, user_info)
+                response_list.append(
+                    {"status": "queued", "msg": "CREATED", "job_id": job.job_id}
+                )
+                target_db.update_target(job)
+            except Exception as e:
+                logger.exception(e)
+                response_list.append({"status": "FAILED", "msg": "FAILED"})
+    else:
+        response_list.append(
+            {"status": "FAILED", "msg": "UPGRADE_IN_PROGRESS"}
+        )
     return jsonify(response_list), 200
 
 
