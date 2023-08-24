@@ -217,7 +217,8 @@ Add Python Interpreter "Poetry Environment".
 
 
 ### Running unit tests
-Open terminal and go to root directory of the project and run:
+Start Docker Desktop if you are on Mac.
+Open terminal, go to root directory of the project and run:
 ````
 poetry run pytest --cov=job_service/
 ````
