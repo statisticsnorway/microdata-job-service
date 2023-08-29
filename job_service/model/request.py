@@ -96,6 +96,10 @@ class UpdateJobRequest(CamelModel, extra=Extra.forbid):
     description: Optional[str]
     log: Optional[str]
 
+class MaintenanceStatusRequest(CamelModel, extra=Extra.forbid):
+    msg: str
+    pause: int
+
 
 class GetJobRequest(CamelModel, extra=Extra.forbid, use_enum_values=True):
     status: Optional[JobStatus]
