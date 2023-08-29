@@ -32,8 +32,15 @@ def set_status(document: dict):
     logger.info(f"Successfully set maintenance status {document} with id {str(doc_id)}")
 
 
-def get_status() -> bool:
+def get_latest_status():
     documents = maintenance.find().sort([('timestamp', -1)]).limit(1)
     if not documents:
         raise NotFoundException(f"No documents found in collection jobDB.maintenance")
     return documents[0]
+
+
+def get_history():
+    documents = maintenance.find().sort([('timestamp', -1)])
+    if not documents:
+        raise NotFoundException(f"No documents found in collection jobDB.maintenance")
+    return documents
