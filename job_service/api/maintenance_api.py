@@ -24,4 +24,11 @@ def set_status(body: MaintenanceStatusRequest):
 def get_status():
     logger.info("GET /maintenance-status")
     document = maintenance_db.get_latest_status()
-    return jsonify(document)
+    return jsonify(document), 200
+
+
+@maintenance_api.route("/maintenance-history", methods=["GET"])
+def get_history():
+    logger.info("GET /maintenance-history")
+    documents = maintenance_db.get_history()
+    return jsonify(documents), 200
