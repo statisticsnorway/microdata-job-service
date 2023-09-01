@@ -3,9 +3,9 @@ from pytest_mock import MockFixture
 
 from job_service.adapter import maintenance_db
 
-MAINTENANCE_STATUS_REQUEST_VALID = {"msg": "we upgrade chill", "pause": 1}
-MAINTENANCE_STATUS_REQUEST_NO_MSG = {"pause": 1}
-MAINTENANCE_STATUS_REQUEST_INVALID_PAUSE_VALUE = {"msg": "we upgrade chill", "pause": 10}
+MAINTENANCE_STATUS_REQUEST_VALID = {"msg": "we upgrade chill", "pause": True}
+MAINTENANCE_STATUS_REQUEST_NO_MSG = {"pause": True}
+MAINTENANCE_STATUS_REQUEST_INVALID_PAUSE_VALUE = {"msg": "we upgrade chill", "pause": "Should not be a string"}
 
 RESPONSE_FROM_DB = [{'_id': '64ee001303a2f9d32f549e0d',
                      'msg': 'Today is 2023-08-31, we need to upgrade again',
