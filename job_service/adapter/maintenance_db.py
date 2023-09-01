@@ -5,6 +5,7 @@ import pymongo
 
 from job_service.config import environment, secrets
 from job_service.exceptions import NotFoundException
+from job_service.model.request import MaintenanceStatusRequest
 
 MONGODB_URL = environment.get("MONGODB_URL")
 MONGODB_USER = secrets.get("MONGODB_USER")
@@ -22,9 +23,13 @@ maintenance = db.maintenance
 logger = logging.getLogger()
 
 
-def set_status(document: dict):
+def set_status(status_request: MaintenanceStatusRequest):
     try:
-        document["timestamp"] = str(datetime.now())
+        document = {
+            "msg": status_request.msg,
+            "pause": status_request.pause,
+            "timestamp": str(datetime.now())
+        }
         doc_id = maintenance.insert_one(document)
     except Exception as e:
         logger.error(f"Exception occured while setting maintenance status: {document}")

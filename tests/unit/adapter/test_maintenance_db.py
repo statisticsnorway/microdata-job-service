@@ -2,6 +2,7 @@
 from pytest_mock import MockFixture
 from testcontainers.mongodb import MongoDbContainer
 
+from job_service.model.request import MaintenanceStatusRequest
 from job_service.adapter import maintenance_db
 
 mongo = MongoDbContainer("mongo:5.0")
@@ -22,13 +23,11 @@ def test_set_and_get_status(mocker: MockFixture):
         maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
 
-    maintenance_db.set_status({"msg": "we upgrade chill", "pause": True})
+    maintenance_db.set_status(MaintenanceStatusRequest(msg="we upgrade chill", pause=True))
     assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 1
-
-    maintenance_db.set_status({"msg": "finished upgrading", "pause": False})
+    maintenance_db.set_status(MaintenanceStatusRequest(msg="finished upgrading", pause=False))
     assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 2
-
-    maintenance_db.set_status({"msg": "we need to upgrade again", "pause": True})
+    maintenance_db.set_status(MaintenanceStatusRequest(msg="we need to upgrade again", pause=True))
     assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 3
 
     lst = DB_CLIENT.jobdb.maintenance.find()
@@ -45,9 +44,9 @@ def test_get_history(mocker: MockFixture):
     mocker.patch.object(
         maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
-    maintenance_db.set_status({"msg": "first", "pause": True})
-    maintenance_db.set_status({"msg": "second", "pause": False})
-    maintenance_db.set_status({"msg": "last", "pause": True})
+    maintenance_db.set_status(MaintenanceStatusRequest(msg="first", pause=True))
+    maintenance_db.set_status(MaintenanceStatusRequest(msg="second", pause=False))
+    maintenance_db.set_status(MaintenanceStatusRequest(msg="last", pause=True))
 
     documents = maintenance_db.get_history()
 

@@ -103,9 +103,7 @@ class MaintenanceStatusRequest(CamelModel, extra=Extra.forbid):
 
     @root_validator(skip_on_failure=True)
     def check_values(cls, values):  # pylint: disable=no-self-argument
-        msg = values["msg"]
-        pause = values["pause"]
-        if not (msg and pause):
+        if not ("msg" in values and "pause" in values):
             raise ValidationError("Values for msg and pause are mandatory")
         return values
 
