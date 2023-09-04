@@ -101,12 +101,6 @@ class MaintenanceStatusRequest(CamelModel, extra=Extra.forbid):
     msg: str
     pause: bool
 
-    @root_validator(skip_on_failure=True)
-    def check_values(cls, values):  # pylint: disable=no-self-argument
-        if not ("msg" in values and "pause" in values):
-            raise ValidationError("Values for msg and pause are mandatory")
-        return values
-
 
 class GetJobRequest(CamelModel, extra=Extra.forbid, use_enum_values=True):
     status: Optional[JobStatus]
