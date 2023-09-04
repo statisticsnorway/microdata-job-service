@@ -16,7 +16,11 @@ maintenance_api = Blueprint("maintenance_api", __name__)
 def set_status(body: MaintenanceStatusRequest):
     logger.info(f"POST /maintenance-status with request body: {body}")
     maintenance_db.set_status(body)
-    response = {"status": "SUCCESS", "msg": body.dict()["msg"], "pause": body.dict()["pause"]}
+    response = {
+        "status": "SUCCESS",
+        "msg": body.dict()["msg"],
+        "pause": body.dict()["pause"],
+    }
     return jsonify(response), 200
 
 

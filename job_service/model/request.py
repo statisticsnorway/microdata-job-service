@@ -40,9 +40,9 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
                 )
         if operation == "BUMP":
             if (
-                    values.get("bump_manifesto") is None
-                    or values.get("bump_from_version") is None
-                    or values.get("bump_to_version") is None
+                values.get("bump_manifesto") is None
+                or values.get("bump_from_version") is None
+                or values.get("bump_to_version") is None
             ):
                 raise ValidationError(
                     "Must provide a bumpManifesto, bumpFromVersion and "
@@ -51,7 +51,7 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
         return values
 
     def generate_job_from_request(
-            self, job_id: str, user_info: UserInfo
+        self, job_id: str, user_info: UserInfo
     ) -> Job:
         if self.operation == "SET_STATUS":
             job_parameters = JobParameters(
