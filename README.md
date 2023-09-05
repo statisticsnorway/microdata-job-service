@@ -139,11 +139,60 @@ _____
 ></details>
 ></details>
 ><details>
+_____
+> ### **[POST]** `/maintenance-status`
+> Sets a flagg that prevents starting new jobs. 
+> This will typically be the case when new versions of containers are about to be deployed.
+><details>
+>  <summary>Example request</summary>
+>
+>  ```curl -X POST <url>/maintenance-status -d '{"msg": "We need to upgrade", "pause": 1}'```
+></details>
+></details>
+><details>
 >  <summary>Responses</summary>
 >
 >  | status | json                                                                                        |
 >  |--------|---------------------------------------------------------------------------------------------|
->  |   200  |```[...jobs]``` |
+>  |   200  ||
+>  |   400  |```{"message": "<Error message>"}```                                                         |
+>  |   500  |```{"message": "<Error message>"}```                                                         |
+>
+></details>
+_____
+> ### **[GET]** `/maintenance-status`
+> Retrieves the flagg preventing starting new jobs.
+><details>
+>  <summary>Example request</summary>
+>
+>  ```curl -X GET <url>/maintenance-status```
+></details>
+></details>
+><details>
+>  <summary>Responses</summary>
+>
+>  | status | json                                                                                        |
+>  |--------|---------------------------------------------------------------------------------------------|
+>  |   200  | |
+>  |   400  |```{"message": "<Error message>"}```                                                         |
+>  |   500  |```{"message": "<Error message>"}```                                                         |
+>
+></details>
+_____
+> ### **[GET]** `/maintenance-history`
+> Retrieves a list of all statuses sorted in reverted chronological order. 
+><details>
+>  <summary>Example request</summary>
+>
+>  ```curl -X GET <url>/maintenance-history```
+></details>
+></details>
+><details>
+>  <summary>Responses</summary>
+>
+>  | status | json                                                                                        |
+>  |--------|---------------------------------------------------------------------------------------------|
+>  |   200  | |
 >  |   400  |```{"message": "<Error message>"}```                                                         |
 >  |   500  |```{"message": "<Error message>"}```                                                         |
 >
