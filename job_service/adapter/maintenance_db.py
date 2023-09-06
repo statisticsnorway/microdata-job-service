@@ -42,18 +42,16 @@ def set_status(status_request: MaintenanceStatusRequest):
 
 
 def get_latest_status():
-    documents = maintenance.find().sort([("timestamp", -1)]).limit(1)
-    if not documents:
-        raise NotFoundException(
-            "No documents found in collection jobDB.maintenance"
-        )
+    cursor = maintenance.find().sort([("timestamp", -1)]).limit(1)
+    documents = list(cursor)
+    if len(documents)==0:
+        return {}
     return documents[0]
 
 
 def get_history():
-    documents = maintenance.find().sort([("timestamp", -1)])
-    if not documents:
-        raise NotFoundException(
-            "No documents found in collection jobDB.maintenance"
-        )
+    cursor = maintenance.find().sort([("timestamp", -1)])
+    documents = list(cursor)
+    if len(documents)==0:
+        return []
     return documents

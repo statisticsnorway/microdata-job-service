@@ -46,6 +46,14 @@ def test_set_and_get_status(mocker: MockFixture):
     assert document["pause"] == 1
 
 
+def test_get_status_from_empty_collection(mocker: MockFixture):
+    mocker.patch.object(
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
+    )
+    document = maintenance_db.get_latest_status()
+    assert document == {}
+
+
 def test_get_history(mocker: MockFixture):
     mocker.patch.object(
         maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
@@ -63,3 +71,11 @@ def test_get_history(mocker: MockFixture):
     assert documents[0]["msg"] == "last"
     assert documents[1]["msg"] == "second"
     assert documents[2]["msg"] == "first"
+
+
+def test_get_history_from_empty_collection(mocker: MockFixture):
+    mocker.patch.object(
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
+    )
+    documents = maintenance_db.get_history()
+    assert documents == []
