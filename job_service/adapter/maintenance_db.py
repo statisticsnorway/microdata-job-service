@@ -4,7 +4,6 @@ from datetime import datetime
 import pymongo
 
 from job_service.config import environment, secrets
-from job_service.exceptions import NotFoundException
 from job_service.model.request import MaintenanceStatusRequest
 
 MONGODB_URL = environment.get("MONGODB_URL")
@@ -42,16 +41,16 @@ def set_status(status_request: MaintenanceStatusRequest):
 
 
 def get_latest_status():
-    cursor = maintenance.find().sort([("timestamp", -1)]).limit(1)
+    cursor = maintenance.find({}, {"_id": 0}).sort([("timestamp", -1)]).limit(1)
     documents = list(cursor)
-    if len(documents)==0:
+    if len(documents) == 0:
         return {}
     return documents[0]
 
 
 def get_history():
-    cursor = maintenance.find().sort([("timestamp", -1)])
+    cursor = maintenance.find({}, {"_id": 0}).sort([("timestamp", -1)])
     documents = list(cursor)
-    if len(documents)==0:
+    if len(documents) == 0:
         return []
     return documents

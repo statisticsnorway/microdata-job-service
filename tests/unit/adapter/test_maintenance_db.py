@@ -36,17 +36,14 @@ def test_set_and_get_status(mocker: MockFixture):
     )
     assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 3
 
-    lst = DB_CLIENT.jobdb.maintenance.find()
-    latest = max(lst, key=lambda x: x["timestamp"])
-
     document = maintenance_db.get_latest_status()
 
-    assert document["_id"] == latest["_id"]
     assert document["msg"] == "we need to upgrade again"
-    assert document["pause"] == 1
+    assert document["pause"] == True
+    assert "timestamp" in document.keys()
 
 
-def test_get_status_from_empty_collection(mocker: MockFixture):
+def test_get_status_no_documents(mocker: MockFixture):
     mocker.patch.object(
         maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
@@ -73,7 +70,7 @@ def test_get_history(mocker: MockFixture):
     assert documents[2]["msg"] == "first"
 
 
-def test_get_history_from_empty_collection(mocker: MockFixture):
+def test_get_history_no_documents(mocker: MockFixture):
     mocker.patch.object(
         maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
