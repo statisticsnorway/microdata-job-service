@@ -54,3 +54,7 @@ def get_history():
     if len(documents) == 0:
         return []
     return documents
+
+
+if len(get_latest_status()) == 0:
+    set_status(MaintenanceStatusRequest(msg="Initial status inserted by job service at startup.", pause=False))
