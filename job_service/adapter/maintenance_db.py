@@ -30,7 +30,7 @@ def set_status(status_request: MaintenanceStatusRequest):
             "timestamp": str(datetime.now()),
         }
         doc_id = maintenance.insert_one(document)
-        return {"_id": doc_id, **document}
+        return {**document}
     except Exception as e:
         logger.error(
             f"Exception occured while setting maintenance status: {document}"

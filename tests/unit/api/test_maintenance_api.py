@@ -62,7 +62,7 @@ def test_set_maintenance_status_with_no_msg(flask_app, mocker: MockFixture):
 
 
 def test_set_maintenance_status_with_invalid_paused(
-        flask_app, mocker: MockFixture
+    flask_app, mocker: MockFixture
 ):
     db_set_status = mocker.patch.object(maintenance_db, "set_status")
     response = flask_app.post(
