@@ -26,7 +26,7 @@ def set_status(status_request: MaintenanceStatusRequest):
     try:
         document = {
             "msg": status_request.msg,
-            "pause": status_request.pause,
+            "paused": status_request.paused,
             "timestamp": str(datetime.now()),
         }
         doc_id = maintenance.insert_one(document)
@@ -59,6 +59,6 @@ def initialize():
     return set_status(
         MaintenanceStatusRequest(
             msg="Initial status inserted by job service at startup.",
-            pause=False,
+            paused=False,
         )
     )

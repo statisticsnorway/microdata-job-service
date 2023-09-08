@@ -19,7 +19,7 @@ def set_status(body: MaintenanceStatusRequest):
     response = {
         "status": "SUCCESS",
         "msg": body.dict()["msg"],
-        "pause": body.dict()["pause"],
+        "paused": body.dict()["paused"],
     }
     return jsonify(response), 200
 
