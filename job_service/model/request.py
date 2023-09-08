@@ -99,7 +99,7 @@ class UpdateJobRequest(CamelModel, extra=Extra.forbid):
 
 class MaintenanceStatusRequest(CamelModel, extra=Extra.forbid):
     msg: str
-    pause: bool
+    paused: bool
 
 
 class GetJobRequest(CamelModel, extra=Extra.forbid, use_enum_values=True):

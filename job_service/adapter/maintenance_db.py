@@ -4,7 +4,6 @@ from datetime import datetime
 import pymongo
 
 from job_service.config import environment, secrets
-from job_service.exceptions import NotFoundException
 from job_service.model.request import MaintenanceStatusRequest
 
 MONGODB_URL = environment.get("MONGODB_URL")
@@ -27,33 +26,39 @@ def set_status(status_request: MaintenanceStatusRequest):
     try:
         document = {
             "msg": status_request.msg,
-            "pause": status_request.pause,
+            "paused": status_request.paused,
             "timestamp": str(datetime.now()),
         }
         doc_id = maintenance.insert_one(document)
+        return document
     except Exception as e:
         logger.error(
             f"Exception occured while setting maintenance status: {document}"
         )
         raise e
-    logger.info(
-        f"Successfully set maintenance status {document} with id {str(doc_id)}"
-    )
-
 
 def get_latest_status():
-    documents = maintenance.find().sort([("timestamp", -1)]).limit(1)
-    if not documents:
-        raise NotFoundException(
-            "No documents found in collection jobDB.maintenance"
-        )
+    cursor = (
+        maintenance.find({}, {"_id": 0}).sort([("timestamp", -1)]).limit(1)
+    )
+    documents = list(cursor)
+    if len(documents) == 0:
+        return initialize()
     return documents[0]
 
 
 def get_history():
-    documents = maintenance.find().sort([("timestamp", -1)])
-    if not documents:
-        raise NotFoundException(
-            "No documents found in collection jobDB.maintenance"
-        )
+    cursor = maintenance.find({}, {"_id": 0}).sort([("timestamp", -1)])
+    documents = list(cursor)
+    if len(documents) == 0:
+        return [initialize()]
     return documents
+
+def initialize():
+    logger.info("initializing")
+    return set_status(
+        MaintenanceStatusRequest(
+            msg="Initial status inserted by job service at startup.",
+            paused=False,
+        )
+    )
