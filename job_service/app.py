@@ -81,5 +81,4 @@ def handle_unknown_error(e):
 
 # this is needed to run the application in IDE
 if __name__ == "__main__":
-    maintenance_db.initialize()
     app.run(port=8000, host="0.0.0.0")

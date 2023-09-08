@@ -18,6 +18,28 @@ def setup_function():
     DB_CLIENT.jobdb.drop_collection("maintenance")
 
 
+def test_initialize_after_get_latest_status(mocker: MockFixture):
+    mocker.patch.object(
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
+    )
+    document = maintenance_db.get_latest_status()
+
+    assert document["msg"] == "Initial status inserted by job service at startup."
+    assert document["pause"] == 0
+    assert "timestamp" in document.keys()
+
+
+def test_initialize_after_get_history(mocker: MockFixture):
+    mocker.patch.object(
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
+    )
+    documents = maintenance_db.get_history()
+
+    assert documents[0]["msg"] == "Initial status inserted by job service at startup."
+    assert documents[0]["pause"] == 0
+    assert "timestamp" in documents[0].keys()
+
+
 def test_set_and_get_status(mocker: MockFixture):
     mocker.patch.object(
         maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
@@ -43,14 +65,6 @@ def test_set_and_get_status(mocker: MockFixture):
     assert "timestamp" in document.keys()
 
 
-def test_get_status_no_documents(mocker: MockFixture):
-    mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
-    )
-    document = maintenance_db.get_latest_status()
-    assert document == {}
-
-
 def test_get_history(mocker: MockFixture):
     mocker.patch.object(
         maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
@@ -69,10 +83,3 @@ def test_get_history(mocker: MockFixture):
     assert documents[1]["msg"] == "second"
     assert documents[2]["msg"] == "first"
 
-
-def test_get_history_no_documents(mocker: MockFixture):
-    mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
-    )
-    documents = maintenance_db.get_history()
-    assert documents == []

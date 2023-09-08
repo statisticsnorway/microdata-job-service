@@ -30,15 +30,12 @@ def set_status(status_request: MaintenanceStatusRequest):
             "timestamp": str(datetime.now()),
         }
         doc_id = maintenance.insert_one(document)
+        return {"_id": doc_id, **document}
     except Exception as e:
         logger.error(
             f"Exception occured while setting maintenance status: {document}"
         )
         raise e
-    logger.info(
-        f"Successfully set maintenance status {document} with id {str(doc_id)}"
-    )
-
 
 def get_latest_status():
     cursor = (
@@ -46,7 +43,7 @@ def get_latest_status():
     )
     documents = list(cursor)
     if len(documents) == 0:
-        return {}
+        return initialize()
     return documents[0]
 
 
@@ -54,15 +51,14 @@ def get_history():
     cursor = maintenance.find({}, {"_id": 0}).sort([("timestamp", -1)])
     documents = list(cursor)
     if len(documents) == 0:
-        return []
+        return [initialize()]
     return documents
 
-
 def initialize():
-    if len(get_latest_status()) == 0:
-        set_status(
-            MaintenanceStatusRequest(
-                msg="Initial status inserted by job service at startup.",
-                pause=False,
-            )
+    logger.info("initializing")
+    return set_status(
+        MaintenanceStatusRequest(
+            msg="Initial status inserted by job service at startup.",
+            pause=False,
         )
+    )
