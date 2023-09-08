@@ -10,6 +10,7 @@ from job_service.api.job_api import job_api
 from job_service.api.targets_api import targets_api
 from job_service.api.importable_datasets_api import importable_datasets_api
 from job_service.api.maintenance_api import maintenance_api
+from job_service.adapter import maintenance_db
 from job_service.exceptions import (
     AuthError,
     JobExistsException,
@@ -80,4 +81,5 @@ def handle_unknown_error(e):
 
 # this is needed to run the application in IDE
 if __name__ == "__main__":
+    maintenance_db.initialize()
     app.run(port=8000, host="0.0.0.0")

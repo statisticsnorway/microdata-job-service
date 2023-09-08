@@ -39,7 +39,7 @@ def test_set_and_get_status(mocker: MockFixture):
     document = maintenance_db.get_latest_status()
 
     assert document["msg"] == "we need to upgrade again"
-    assert document["pause"] == True
+    assert document["pause"]
     assert "timestamp" in document.keys()
 
 
