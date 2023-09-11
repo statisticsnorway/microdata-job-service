@@ -15,12 +15,12 @@ def teardown_module():
 
 
 def setup_function():
-    DB_CLIENT.maintenance_db.drop_collection("maintenance")
+    DB_CLIENT.jobdb.drop_collection("maintenance")
 
 
 def test_initialize_after_get_latest_status(mocker: MockFixture):
     mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.maintenance_db.maintenance
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
     latest_status = maintenance_db.get_latest_status()
 
@@ -34,7 +34,7 @@ def test_initialize_after_get_latest_status(mocker: MockFixture):
 
 def test_initialize_after_get_history(mocker: MockFixture):
     mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.maintenance_db.maintenance
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
     statuses = maintenance_db.get_history()
 
@@ -48,7 +48,7 @@ def test_initialize_after_get_history(mocker: MockFixture):
 
 def test_set_status(mocker: MockFixture):
     mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.maintenance_db.maintenance
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
 
     status = maintenance_db.set_status(
@@ -62,21 +62,21 @@ def test_set_status(mocker: MockFixture):
 
 def test_set_and_get_status(mocker: MockFixture):
     mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.maintenance_db.maintenance
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
 
     maintenance_db.set_status(
         MaintenanceStatusRequest(msg="we upgrade chill", paused=True)
     )
-    assert DB_CLIENT.maintenance_db.maintenance.count_documents({}) == 1
+    assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 1
     maintenance_db.set_status(
         MaintenanceStatusRequest(msg="finished upgrading", paused=False)
     )
-    assert DB_CLIENT.maintenance_db.maintenance.count_documents({}) == 2
+    assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 2
     maintenance_db.set_status(
         MaintenanceStatusRequest(msg="we need to upgrade again", paused=True)
     )
-    assert DB_CLIENT.maintenance_db.maintenance.count_documents({}) == 3
+    assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 3
 
     latest_status = maintenance_db.get_latest_status()
 
@@ -87,7 +87,7 @@ def test_set_and_get_status(mocker: MockFixture):
 
 def test_get_history(mocker: MockFixture):
     mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.maintenance_db.maintenance
+        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
     )
 
     maintenance_db.set_status(
