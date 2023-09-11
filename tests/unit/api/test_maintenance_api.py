@@ -87,7 +87,9 @@ def test_get_maintenance_status(flask_app, mocker: MockFixture):
     assert response.json == RESPONSE_FROM_DB[0]
 
 
-def test_get_maintenance_status_from_empty_collection(flask_app, mocker: MockFixture):
+def test_get_maintenance_status_from_empty_collection(
+    flask_app, mocker: MockFixture
+):
     get_status = mocker.patch.object(
         maintenance_db, "get_latest_status", return_value={}
     )
@@ -110,7 +112,9 @@ def test_get_maintenance_history(flask_app, mocker: MockFixture):
     assert response.json == RESPONSE_FROM_DB
 
 
-def test_get_maintenance_history_from_empty_collection(flask_app, mocker: MockFixture):
+def test_get_maintenance_history_from_empty_collection(
+    flask_app, mocker: MockFixture
+):
     get_history = mocker.patch.object(
         maintenance_db, "get_history", return_value=[]
     )

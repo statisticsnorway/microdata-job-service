@@ -24,7 +24,9 @@ def test_initialize_after_get_latest_status(mocker: MockFixture):
     )
     document = maintenance_db.get_latest_status()
 
-    assert document["msg"] == "Initial status inserted by job service at startup."
+    assert (
+        document["msg"] == "Initial status inserted by job service at startup."
+    )
     assert document["paused"] == 0
     assert "timestamp" in document.keys()
 
@@ -35,7 +37,10 @@ def test_initialize_after_get_history(mocker: MockFixture):
     )
     documents = maintenance_db.get_history()
 
-    assert documents[0]["msg"] == "Initial status inserted by job service at startup."
+    assert (
+        documents[0]["msg"]
+        == "Initial status inserted by job service at startup."
+    )
     assert documents[0]["paused"] == 0
     assert "timestamp" in documents[0].keys()
 
@@ -75,11 +80,12 @@ def test_get_history(mocker: MockFixture):
     maintenance_db.set_status(
         MaintenanceStatusRequest(msg="second", paused=False)
     )
-    maintenance_db.set_status(MaintenanceStatusRequest(msg="last", paused=True))
+    maintenance_db.set_status(
+        MaintenanceStatusRequest(msg="last", paused=True)
+    )
 
     documents = maintenance_db.get_history()
 
     assert documents[0]["msg"] == "last"
     assert documents[1]["msg"] == "second"
     assert documents[2]["msg"] == "first"
-
