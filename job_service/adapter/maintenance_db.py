@@ -29,13 +29,14 @@ def set_status(status_request: MaintenanceStatusRequest):
             "paused": status_request.paused,
             "timestamp": str(datetime.now()),
         }
-        doc_id = maintenance.insert_one(document)
-        return document
+        doc_id = maintenance.insert_one(document).inserted_id
+        return maintenance.find_one({"_id": doc_id}, projection={"_id": False})
     except Exception as e:
         logger.error(
             f"Exception occured while setting maintenance status: {document}"
         )
         raise e
+
 
 def get_latest_status():
     cursor = (
@@ -53,6 +54,7 @@ def get_history():
     if len(documents) == 0:
         return [initialize()]
     return documents
+
 
 def initialize():
     logger.info("initializing")

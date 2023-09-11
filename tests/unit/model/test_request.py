@@ -7,18 +7,18 @@ from job_service.model.job import Job, UserInfo
 from job_service.model.request import NewJobsRequest, NewJobRequest
 
 
-RESOURCE_DIR = 'tests/resources/model'
-VALID_JOB_REQUESTS_PATH = f'{RESOURCE_DIR}/valid_job_requests.json'
-with open(VALID_JOB_REQUESTS_PATH, 'r', encoding='utf-8') as f:
+RESOURCE_DIR = "tests/resources/model"
+VALID_JOB_REQUESTS_PATH = f"{RESOURCE_DIR}/valid_job_requests.json"
+with open(VALID_JOB_REQUESTS_PATH, "r", encoding="utf-8") as f:
     VALID_JOB_REQUESTS = json.load(f)
-INVALID_JOB_REQUESTS_PATH = f'{RESOURCE_DIR}/invalid_job_requests.json'
-with open(INVALID_JOB_REQUESTS_PATH, 'r', encoding='utf-8') as f:
+INVALID_JOB_REQUESTS_PATH = f"{RESOURCE_DIR}/invalid_job_requests.json"
+with open(INVALID_JOB_REQUESTS_PATH, "r", encoding="utf-8") as f:
     INVALID_JOB_REQUESTS = json.load(f)
-JOB_ID = '123-123-123-123'
+JOB_ID = "123-123-123-123"
 USER_INFO_DICT = {
-    'userId': '123-123-123',
-    'firstName': 'Data',
-    'lastName': 'Admin'
+    "userId": "123-123-123",
+    "firstName": "Data",
+    "lastName": "Admin",
 }
 USER_INFO = UserInfo(**USER_INFO_DICT)
 
@@ -34,6 +34,6 @@ def test_new_jobs_requests():
 
 
 def test_invalid_new_jobs_requests():
-    for job in INVALID_JOB_REQUESTS['jobs']:
+    for job in INVALID_JOB_REQUESTS["jobs"]:
         with pytest.raises(ValidationError):
             NewJobRequest(**job)
