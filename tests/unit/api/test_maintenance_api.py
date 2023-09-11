@@ -10,21 +10,24 @@ MAINTENANCE_STATUS_REQUEST_INVALID_PAUSE_VALUE = {
     "paused": "Should not be a string",
 }
 
+NEW_STATUS = {
+    "msg": "we upgrade chill",
+    "paused": 1,
+    "timestamp": "2023-08-31 16:26:27.575276",
+}
+
 RESPONSE_FROM_DB = [
     {
-        "_id": "64ee001303a2f9d32f549e0d",
         "msg": "Today is 2023-08-31, we need to upgrade again",
         "paused": 1,
         "timestamp": "2023-08-31 16:26:27.575276",
     },
     {
-        "_id": "64ee001303a2f9d32f549e0d",
         "msg": "Today is 2023-08-30, finished upgrading",
         "paused": 0,
         "timestamp": "2023-08-30 16:26:27.575276",
     },
     {
-        "_id": "64ee001303a2f9d32f549e0d",
         "msg": "Today is 2023-08-29, we need to upgrade",
         "paused": 1,
         "timestamp": "2023-08-29 16:26:27.575276",
@@ -33,7 +36,9 @@ RESPONSE_FROM_DB = [
 
 
 def test_set_maintenance_status(flask_app, mocker: MockFixture):
-    db_set_status = mocker.patch.object(maintenance_db, "set_status")
+    db_set_status = mocker.patch.object(
+        maintenance_db, "set_status", return_value=NEW_STATUS
+    )
     response = flask_app.post(
         url_for("maintenance_api.set_status"),
         json=MAINTENANCE_STATUS_REQUEST_VALID,
@@ -41,12 +46,7 @@ def test_set_maintenance_status(flask_app, mocker: MockFixture):
 
     db_set_status.assert_called_once()
     assert response.status_code == 200
-
-    assert response.json == {
-        "status": "SUCCESS",
-        "msg": "we upgrade chill",
-        "paused": 1,
-    }
+    assert response.json == NEW_STATUS
 
 
 def test_set_maintenance_status_with_no_msg(flask_app, mocker: MockFixture):

@@ -15,13 +15,8 @@ maintenance_api = Blueprint("maintenance_api", __name__)
 @validate()
 def set_status(body: MaintenanceStatusRequest):
     logger.info(f"POST /maintenance-status with request body: {body}")
-    maintenance_db.set_status(body)
-    response = {
-        "status": "SUCCESS",
-        "msg": body.dict()["msg"],
-        "paused": body.dict()["paused"],
-    }
-    return jsonify(response), 200
+    new_status = maintenance_db.set_status(body)
+    return jsonify(new_status), 200
 
 
 @maintenance_api.route("/maintenance-status", methods=["GET"])
