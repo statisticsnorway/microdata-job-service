@@ -37,13 +37,15 @@ def set_status(status_request: MaintenanceStatusRequest):
         )
         raise e
 
+
 def get_latest_status():
     cursor = (
         maintenance.find({}, {"_id": 0}).sort([("timestamp", -1)]).limit(1)
     )
     documents = list(cursor)
     if len(documents) == 0:
-        return initialize()
+        initialize()
+        return get_latest_status()
     return documents[0]
 
 
@@ -51,12 +53,14 @@ def get_history():
     cursor = maintenance.find({}, {"_id": 0}).sort([("timestamp", -1)])
     documents = list(cursor)
     if len(documents) == 0:
-        return [initialize()]
+        initialize()
+        return get_history()
     return documents
+
 
 def initialize():
     logger.info("initializing")
-    return set_status(
+    set_status(
         MaintenanceStatusRequest(
             msg="Initial status inserted by job service at startup.",
             paused=False,
