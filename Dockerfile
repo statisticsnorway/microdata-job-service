@@ -48,6 +48,10 @@ RUN poetry export > requirements.txt
 # Production image
 FROM python:3.10-slim
 
+# Create user
+RUN groupadd --gid 180291 microdata \
+    && useradd --uid 180291 --gid microdata --shell /bin/bash
+
 WORKDIR /app
 COPY job_service job_service
 #To use application version in logs
@@ -58,6 +62,9 @@ RUN pip install -r requirements.txt
 
 #the output is sent straight to terminal without being first buffered
 ENV PYTHONUNBUFFERED 1
+
+# Change to our non-root user
+USER microdata
 
 CMD [ "gunicorn", "job_service.app:app", "--bind", "0.0.0.0:8000", "--workers", "1"]
 
