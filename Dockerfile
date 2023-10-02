@@ -50,7 +50,7 @@ FROM python:3.10-slim
 
 # Create user
 RUN groupadd --gid 180291 microdata \
-    && useradd --uid 180291 --gid microdata --shell /bin/bash
+    && useradd --uid 180291 --gid microdata microdata
 
 WORKDIR /app
 COPY job_service job_service
