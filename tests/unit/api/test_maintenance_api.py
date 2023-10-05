@@ -61,9 +61,7 @@ def test_set_maintenance_status_with_no_msg(flask_app, mocker: MockFixture):
     assert "validation_error" in response.json
 
 
-def test_set_maintenance_status_with_invalid_paused(
-    flask_app, mocker: MockFixture
-):
+def test_set_maintenance_status_with_invalid_paused(flask_app, mocker: MockFixture):
     db_set_status = mocker.patch.object(maintenance_db, "set_status")
     response = flask_app.post(
         url_for("maintenance_api.set_status"),
@@ -75,7 +73,7 @@ def test_set_maintenance_status_with_invalid_paused(
     assert "validation_error" in response.json
 
 
-def test_get_maintenance_status(flask_app, mocker: MockFixture):
+def test_get_maintenance_status(flask_app, mocker: MockFixture, caplog):
     get_status = mocker.patch.object(
         maintenance_db, "get_latest_status", return_value=RESPONSE_FROM_DB[0]
     )
@@ -85,11 +83,13 @@ def test_get_maintenance_status(flask_app, mocker: MockFixture):
     get_status.assert_called_once()
     assert response.status_code == 200
     assert response.json == RESPONSE_FROM_DB[0]
+    assert (
+        "INFO     root:maintenance_api.py:26 GET /maintenance-status, paused: 1, "
+        "msg: Today is 2023-08-31, we need to upgrade again\n" in caplog.text
+    )
 
 
-def test_get_maintenance_status_from_empty_collection(
-    flask_app, mocker: MockFixture
-):
+def test_get_maintenance_status_from_empty_collection(flask_app, mocker: MockFixture):
     get_status = mocker.patch.object(
         maintenance_db, "get_latest_status", return_value={}
     )
@@ -112,12 +112,8 @@ def test_get_maintenance_history(flask_app, mocker: MockFixture):
     assert response.json == RESPONSE_FROM_DB
 
 
-def test_get_maintenance_history_from_empty_collection(
-    flask_app, mocker: MockFixture
-):
-    get_history = mocker.patch.object(
-        maintenance_db, "get_history", return_value=[]
-    )
+def test_get_maintenance_history_from_empty_collection(flask_app, mocker: MockFixture):
+    get_history = mocker.patch.object(maintenance_db, "get_history", return_value=[])
     response = flask_app.get(url_for("maintenance_api.get_history"))
     get_history.assert_called_once()
 
