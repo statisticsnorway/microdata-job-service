@@ -10,7 +10,6 @@ from job_service.api.job_api import job_api
 from job_service.api.targets_api import targets_api
 from job_service.api.importable_datasets_api import importable_datasets_api
 from job_service.api.maintenance_api import maintenance_api
-from job_service.adapter import maintenance_db
 from job_service.exceptions import (
     AuthError,
     JobExistsException,
