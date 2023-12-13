@@ -6,6 +6,7 @@ from job_service.exceptions import NotFoundException
 from job_service.adapter import job_db, target_db
 from job_service.model.job import Job, UserInfo
 from job_service.model.request import NewJobRequest, UpdateJobRequest
+from job_service.config import environment
 
 NOT_FOUND_MESSAGE = "not found"
 JOB_ID = "123-123-123-123"
@@ -35,6 +36,32 @@ NEW_JOB_REQUEST = {
     "jobs": [
         {"operation": "ADD", "target": "MY_DATASET"},
         {"operation": "CHANGE", "target": "OTHER_DATASET"},
+    ]
+}
+BUMP_JOB_REQUEST = {
+    "jobs": [
+        {
+            "operation": "BUMP",
+            "target": "DATASTORE",
+            "description": "Bump datastore version",
+            "bumpFromVersion": "1.0.0",
+            "bumpToVersion": "1.1.0",
+            "bumpManifesto": {
+                "version": "0.0.0.1634512323",
+                "description": "Draft",
+                "releaseTime": 1634512323,
+                "languageCode": "no",
+                "updateType": "MINOR",
+                "dataStructureUpdates": [
+                    {
+                        "name": "MY_DATASET",
+                        "description": "Første publisering",
+                        "operation": "ADD",
+                        "releaseStatus": "PENDING_RELEASE",
+                    }
+                ],
+            },
+        }
     ]
 }
 UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
@@ -122,3 +149,22 @@ def test_update_job_bad_request(flask_app, mocker: MockFixture):
     update_target.assert_not_called()
     assert response.status_code == 400
     assert "validation_error" in response.json
+
+
+def test_update_job_disabled_bump(flask_app, mocker: MockFixture):
+    environment._ENVIRONMENT_VARIABLES["BUMP_ENABLED"] = False
+    mocker.patch.object(
+        auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
+    )
+    response = flask_app.post(
+        url_for("job_api.new_job"), json=BUMP_JOB_REQUEST
+    )
+
+    print(response.json)
+    assert response.status_code == 200
+    assert response.json == [
+        {
+            "msg": "FAILED: Bumping the datastore is disabled",
+            "status": "FAILED",
+        },
+    ]

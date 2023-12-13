@@ -35,15 +35,27 @@ def new_job(body: NewJobsRequest):
     response_list = []
     for job_request in body.jobs:
         try:
-            job = job_db.new_job(job_request, user_info)
-            response_list.append(
-                {"status": "queued", "msg": "CREATED", "job_id": job.job_id}
-            )
+            if (
+                job_request.target == "DATASTORE"
+                and job_request.operation == "BUMP"
+                and environment.get("BUMP_ENABLED") is False
+            ):
+                raise Exception("Bumping the datastore is disabled")
+            else:
+                job = job_db.new_job(job_request, user_info)
+                response_list.append(
+                    {
+                        "status": "queued",
+                        "msg": "CREATED",
+                        "job_id": job.job_id,
+                    }
+                )
             target_db.update_target(job)
-            fail_bump_job_if_configured(job)
         except Exception as e:
             logger.exception(e)
-            response_list.append({"status": "FAILED", "msg": "FAILED"})
+            response_list.append(
+                {"status": "FAILED", "msg": f"FAILED: {str(e)}"}
+            )
     return jsonify(response_list), 200
 
 
