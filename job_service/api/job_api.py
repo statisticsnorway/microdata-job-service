@@ -10,7 +10,7 @@ from job_service.model.request import (
     UpdateJobRequest,
     GetJobRequest,
 )
-
+from job_service.config import environment
 
 logger = logging.getLogger()
 
@@ -40,6 +40,7 @@ def new_job(body: NewJobsRequest):
                 {"status": "queued", "msg": "CREATED", "job_id": job.job_id}
             )
             target_db.update_target(job)
+            fail_bump_job_if_configured(job)
         except Exception as e:
             logger.exception(e)
             response_list.append({"status": "FAILED", "msg": "FAILED"})
@@ -65,3 +66,18 @@ def update_job(body: UpdateJobRequest, job_id: str):
     if job.parameters.target == "DATASTORE" and job.status == "completed":
         target_db.update_bump_targets(job)
     return {"message": f"Updated job with jobId {job_id}"}
+
+
+def fail_bump_job_if_configured(job):
+    if (
+        job.parameters.target == "DATASTORE"
+        and job.parameters.operation == "BUMP"
+        and environment.get("BUMP_ENABLED") is False
+    ):
+        update_job(
+            UpdateJobRequest(
+                status="failed",
+                log="Bumping the datastore is disabled",
+            ),
+            job.job_id,
+        )
