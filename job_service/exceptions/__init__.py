@@ -16,3 +16,7 @@ class BadQueryException(Exception):
 
 class AuthError(Exception):
     ...
+
+
+class BumpingDisabledException(Exception):
+    ...

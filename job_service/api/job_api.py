@@ -5,6 +5,7 @@ from flask_pydantic import validate
 
 from job_service.api import auth
 from job_service.adapter import job_db, target_db
+from job_service.exceptions import BumpingDisabledException
 from job_service.model.request import (
     NewJobsRequest,
     UpdateJobRequest,
@@ -40,7 +41,9 @@ def new_job(body: NewJobsRequest):
                 and job_request.operation == "BUMP"
                 and environment.get("BUMP_ENABLED") is False
             ):
-                raise Exception("Bumping the datastore is disabled")
+                raise BumpingDisabledException(
+                    "Bumping the datastore is disabled"
+                )
             else:
                 job = job_db.new_job(job_request, user_info)
                 response_list.append(
@@ -51,11 +54,14 @@ def new_job(body: NewJobsRequest):
                     }
                 )
             target_db.update_target(job)
-        except Exception as e:
+        except BumpingDisabledException as e:
             logger.exception(e)
             response_list.append(
                 {"status": "FAILED", "msg": f"FAILED: {str(e)}"}
             )
+        except Exception as e:
+            logger.exception(e)
+            response_list.append({"status": "FAILED", "msg": "FAILED"})
     return jsonify(response_list), 200
 
 
@@ -78,18 +84,3 @@ def update_job(body: UpdateJobRequest, job_id: str):
     if job.parameters.target == "DATASTORE" and job.status == "completed":
         target_db.update_bump_targets(job)
     return {"message": f"Updated job with jobId {job_id}"}
-
-
-def fail_bump_job_if_configured(job):
-    if (
-        job.parameters.target == "DATASTORE"
-        and job.parameters.operation == "BUMP"
-        and environment.get("BUMP_ENABLED") is False
-    ):
-        update_job(
-            UpdateJobRequest(
-                status="failed",
-                log="Bumping the datastore is disabled",
-            ),
-            job.job_id,
-        )
