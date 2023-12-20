@@ -12,6 +12,11 @@ def _initialize_environment() -> dict:
         "JWT_AUTH": (
             False if os.environ.get("JWT_AUTH", "true") == "false" else True
         ),
+        "BUMP_ENABLED": (
+            True
+            if os.environ.get("BUMP_ENABLED", "false") == "true"
+            else False
+        ),
     }
 
 
