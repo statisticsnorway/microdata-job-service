@@ -7,6 +7,7 @@ from typing import List
 
 from job_service.config import environment
 from job_service.model.importable_dataset import ImportableDataset
+from job_service.exceptions import NotFoundException
 
 
 logger = logging.getLogger()
@@ -58,3 +59,12 @@ def get_importable_datasets() -> List[ImportableDataset]:
     if ARCHIVE_DIR.exists():
         datasets += get_datasets_in_directory(ARCHIVE_DIR, is_archived=True)
     return datasets
+
+def delete_importable_datasets(dataset_name):
+    #if not os.path.isfile(f"{INPUT_DIR}/{dataset_name}"):
+        #raise NotFoundException(f"404 - File {dataset_name} not found")
+    #os.remove(f"{INPUT_DIR}/{dataset_name}")
+    try:
+        os.remove(f"{INPUT_DIR}/{dataset_name}")
+    except (FileNotFoundError, OSError) as e:
+        raise NotFoundException(f"File {dataset_name} not found: {str(e)}")

@@ -110,6 +110,26 @@ _____
 >
 ></details>
 _____
+
+> ### **[DELETE]** `/importable-datasets`
+>Delete importable datasets in the input directory.
+><details>
+>  <summary>Example request</summary>
+>  
+>  ```curl -X DELETE <url>/importable-datasets/<dataset_name>```
+></details>
+><details>
+>  <summary>Responses</summary>
+>
+>  | status | json                                                                              |
+>  |--------|-----------------------------------------------------------------------------------|
+>  |   200  |```{"message": "OK, <dataset_name> deleted"}```
+>  |   400  |```{"message": "<Error message>"}```                                               |
+>  |   500  |```{"message": "<Error message>"}```                                               |
+>
+></details>
+_____
+
 > ### **[GET]** `/targets`
 >Get all target objects
 ><details>

@@ -15,3 +15,10 @@ def get_importable_datasets():
     logger.info("GET /importable-datasets")
     datasets = local_storage.get_importable_datasets()
     return jsonify([dataset.dict(by_alias=True) for dataset in datasets])
+
+
+@importable_datasets_api.route("/importable-datasets/<dataset_name>", methods=["DELETE"])
+def delete_importable_datasets(dataset_name):
+    logger.info(f"DELETE /importable-datasets/{dataset_name}")
+    local_storage.delete_importable_datasets(dataset_name)
+    return {"message": f"OK, {dataset_name} deleted"}
