@@ -61,9 +61,6 @@ def get_importable_datasets() -> List[ImportableDataset]:
     return datasets
 
 def delete_importable_datasets(dataset_name):
-    #if not os.path.isfile(f"{INPUT_DIR}/{dataset_name}"):
-        #raise NotFoundException(f"404 - File {dataset_name} not found")
-    #os.remove(f"{INPUT_DIR}/{dataset_name}")
     try:
         os.remove(f"{INPUT_DIR}/{dataset_name}")
     except (FileNotFoundError, OSError) as e:
