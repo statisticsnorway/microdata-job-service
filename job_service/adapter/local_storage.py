@@ -64,4 +64,4 @@ def delete_importable_datasets(dataset_name):
     try:
         os.remove(f"{INPUT_DIR}/{dataset_name}")
     except (FileNotFoundError, OSError) as e:
-        raise NotFoundException(f"File {dataset_name} not found: {str(e)}")
+        raise NotFoundException(f"File {dataset_name} not found") from e
