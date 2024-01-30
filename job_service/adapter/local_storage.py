@@ -82,11 +82,8 @@ def get_importable_datasets() -> List[ImportableDataset]:
 def delete_importable_datasets(dataset_name):
     if not _validate_dataset_name(dataset_name):
         raise NameValidationError(
-            dataset_name,
-            [
-                f'"{dataset_name}" contains invalid characters. '
-                'Please use only uppercase A-Z, numbers 0-9 or "_"',
-            ],
+            f'"{dataset_name}" contains invalid characters. '
+            'Please use only uppercase A-Z, numbers 0-9 or "_"'
         )
     try:
         os.remove(f"{INPUT_DIR}/{dataset_name}.tar")
