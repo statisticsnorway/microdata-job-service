@@ -20,3 +20,7 @@ class AuthError(Exception):
 
 class BumpingDisabledException(Exception):
     ...
+
+
+class NameValidationError(Exception):
+    ...

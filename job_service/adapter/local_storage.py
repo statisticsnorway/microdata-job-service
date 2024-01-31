@@ -1,12 +1,14 @@
 import logging
 import os
 import tarfile
+import string
 from pathlib import Path
 from tarfile import ReadError
 from typing import List
 
 from job_service.config import environment
 from job_service.model.importable_dataset import ImportableDataset
+from job_service.exceptions import NotFoundException, NameValidationError
 
 
 logger = logging.getLogger()
@@ -21,6 +23,19 @@ def _has_data(tar: tarfile.TarFile) -> bool:
 
 def _has_metadata(tar: tarfile.TarFile, dataset_name: str) -> bool:
     return f"{dataset_name}.json" in tar.getnames()
+
+
+def _validate_dataset_name(dataset_name: str) -> bool:
+    """
+    Validates that the name of the dataset only contains valid
+    characters (uppercase A-Z, numbers 0-9 and _)
+    """
+
+    invalid_leading_characters = string.digits + "_"
+    valid_characters = string.ascii_uppercase + string.digits + "_"
+    return dataset_name[0] not in invalid_leading_characters and all(
+        [character in valid_characters for character in dataset_name]
+    )
 
 
 def get_datasets_in_directory(
@@ -47,7 +62,11 @@ def get_datasets_in_directory(
                 f"Couldn't read tarfile for {dataset_name}: {str(e)}"
             )
             continue
-    return datasets
+    return [
+        dataset
+        for dataset in datasets
+        if _validate_dataset_name(dataset.dataset_name)
+    ]
 
 
 def get_importable_datasets() -> List[ImportableDataset]:
@@ -58,3 +77,15 @@ def get_importable_datasets() -> List[ImportableDataset]:
     if ARCHIVE_DIR.exists():
         datasets += get_datasets_in_directory(ARCHIVE_DIR, is_archived=True)
     return datasets
+
+
+def delete_importable_datasets(dataset_name):
+    if not _validate_dataset_name(dataset_name):
+        raise NameValidationError(
+            f'"{dataset_name}" contains invalid characters. '
+            'Please use only uppercase A-Z, numbers 0-9 or "_"'
+        )
+    try:
+        os.remove(f"{INPUT_DIR}/{dataset_name}.tar")
+    except (FileNotFoundError, OSError) as e:
+        raise NotFoundException(f"File {dataset_name} not found") from e

@@ -14,6 +14,7 @@ from job_service.exceptions import (
     AuthError,
     JobExistsException,
     NotFoundException,
+    NameValidationError
 )
 from job_service.config.logging import (
     CustomJSONLog,
@@ -76,6 +77,12 @@ def handle_auth_error(e):
 def handle_unknown_error(e):
     logger.exception(e)
     return {"message": "Internal Server Error"}, 500
+
+
+@app.errorhandler(NameValidationError)
+def handle_invalid_name(e):
+    logger.exception(e)
+    return {"message": str(e)}, 400
 
 
 # this is needed to run the application in IDE
