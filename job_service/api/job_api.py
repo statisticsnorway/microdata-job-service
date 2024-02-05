@@ -18,7 +18,7 @@ logger = logging.getLogger()
 job_api = Blueprint("job_api", __name__)
 
 
-@job_api.route("/jobs", methods=["GET"])
+@job_api.get("/jobs")
 @validate()
 def get_jobs(query: GetJobRequest):
     logger.debug(f"GET /jobs with query: {query}")
@@ -26,7 +26,7 @@ def get_jobs(query: GetJobRequest):
     return jsonify([job.dict(by_alias=True) for job in jobs])
 
 
-@job_api.route("/jobs", methods=["POST"])
+@job_api.post("/jobs")
 @validate()
 def new_job(body: NewJobsRequest):
     logger.info(f"POST /jobs with request body: {body}")
@@ -65,7 +65,7 @@ def new_job(body: NewJobsRequest):
     return jsonify(response_list), 200
 
 
-@job_api.route("/jobs/<job_id>", methods=["GET"])
+@job_api.get("/jobs/<job_id>")
 @validate()
 def get_job(job_id: str):
     logger.info(f"GET /jobs/{job_id}")
@@ -73,7 +73,7 @@ def get_job(job_id: str):
     return job.dict(by_alias=True)
 
 
-@job_api.route("/jobs/<job_id>", methods=["PUT"])
+@job_api.put("/jobs/<job_id>")
 @validate()
 def update_job(body: UpdateJobRequest, job_id: str):
     logger.info(

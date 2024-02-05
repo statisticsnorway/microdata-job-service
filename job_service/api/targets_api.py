@@ -10,7 +10,7 @@ logger = logging.getLogger()
 targets_api = Blueprint("targets_api", __name__)
 
 
-@targets_api.route("/targets", methods=["GET"])
+@targets_api.get("/targets")
 @validate()
 def get_targets():
     logger.debug("GET /targets")
@@ -18,7 +18,7 @@ def get_targets():
     return jsonify([target.dict(by_alias=True) for target in targets])
 
 
-@targets_api.route("/targets/<name>/jobs", methods=["GET"])
+@targets_api.get("/targets/<name>/jobs")
 @validate()
 def get_target_jobs(name: str):
     logger.info(f"GET /targets/{name}")
