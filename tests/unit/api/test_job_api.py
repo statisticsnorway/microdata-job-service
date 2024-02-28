@@ -73,7 +73,7 @@ def test_get_jobs(flask_app, mocker: MockFixture):
         url_for(
             "job_api.get_jobs",
             status="completed",
-            operation="ADD,CHANGE,PATCH_METADATA",
+            operation=["ADD", "CHANGE", "PATCH_METADATA"],
         ),
     )
     assert response.json == [job.dict(by_alias=True) for job in JOB_LIST]

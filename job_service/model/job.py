@@ -1,19 +1,19 @@
 from datetime import datetime
 from typing import List, Optional, Union
 
-from pydantic import Extra, root_validator
+from pydantic import root_validator
 
 from job_service.model.camelcase_model import CamelModel
 from job_service.model.enums import JobStatus, ReleaseStatus, Operation
 
 
-class UserInfo(CamelModel, extra=Extra.forbid):
+class UserInfo(CamelModel, extra="forbid"):
     user_id: str
     first_name: str
     last_name: str
 
 
-class DataStructureUpdate(CamelModel, extra=Extra.forbid):
+class DataStructureUpdate(CamelModel, extra="forbid"):
     name: str
     description: str
     operation: str
@@ -32,11 +32,11 @@ class DatastoreVersion(CamelModel):
 class JobParameters(CamelModel, use_enum_values=True):
     operation: Operation
     target: str
-    bump_manifesto: Optional[DatastoreVersion]
-    description: Optional[str]
-    release_status: Optional[ReleaseStatus]
-    bump_from_version: Optional[str]
-    bump_to_version: Optional[str]
+    bump_manifesto: Optional[DatastoreVersion] = None
+    description: Optional[str] = None
+    release_status: Optional[ReleaseStatus] = None
+    bump_from_version: Optional[str] = None
+    bump_to_version: Optional[str] = None
 
     @root_validator(skip_on_failure=True)
     @classmethod
@@ -67,7 +67,7 @@ class JobParameters(CamelModel, use_enum_values=True):
             }
 
 
-class Log(CamelModel, extra=Extra.forbid):
+class Log(CamelModel, extra="forbid"):
     at: datetime
     message: str
 
