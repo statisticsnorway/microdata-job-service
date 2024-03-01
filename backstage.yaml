@@ -1,0 +1,32 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: job-service
+  title: Job service
+  description: |
+    Lookup service for Jobs
+  tags:
+    - python
+    - flask
+    - pymongo
+  annotations:
+    github.com/project-slug: statisticsnorway/job-service
+spec:
+  type: service
+  owner: microdata-developers
+  lifecycle: production
+  providesApis:
+    - job-service-api
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: job-service-api
+  description: Job service
+spec:
+  type: openapi
+  lifecycle: production
+  owner: microdata-developers
+  definition: 
+    $text: .
