@@ -23,7 +23,7 @@ job_api = Blueprint("job_api", __name__)
 def get_jobs(query: GetJobRequest):
     logger.debug(f"GET /jobs with query: {query}")
     jobs = job_db.get_jobs(query)
-    return jsonify([job.dict(by_alias=True) for job in jobs])
+    return jsonify([job.model_dump(exclude_none=True, by_alias=True) for job in jobs])
 
 
 @job_api.post("/jobs")
@@ -70,14 +70,14 @@ def new_job(body: NewJobsRequest):
 def get_job(job_id: str):
     logger.info(f"GET /jobs/{job_id}")
     job = job_db.get_job(job_id)
-    return job.dict(by_alias=True)
+    return job.model_dump(exclude_none=True, by_alias=True)
 
 
 @job_api.put("/jobs/<job_id>")
 @validate()
 def update_job(body: UpdateJobRequest, job_id: str):
     logger.info(
-        f"PUT /jobs/{job_id} with request body: {body.dict(by_alias=True)}"
+        f"PUT /jobs/{job_id} with request body: {body.model_dump(exclude_none=True, by_alias=True)}"
     )
     job = job_db.update_job(job_id, body)
     target_db.update_target(job)

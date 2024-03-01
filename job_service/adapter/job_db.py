@@ -89,7 +89,7 @@ def new_job(new_job_request: NewJobRequest, user_info: UserInfo) -> Job:
     try:
         update_result: UpdateResult = in_progress.update_one(
             {"parameters.target": job.parameters.target},
-            {"$setOnInsert": job.dict(by_alias=True)},
+            {"$setOnInsert": job.model_dump(exclude_none=True, by_alias=True)},
             upsert=True,
         )
     except DuplicateKeyError as e:

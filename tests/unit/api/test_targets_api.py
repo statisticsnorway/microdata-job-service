@@ -52,7 +52,7 @@ def test_get_targets(flask_app, mocker):
     )
     response = flask_app.get(url_for("targets_api.get_targets"))
     assert response.json == [
-        target.dict(by_alias=True) for target in TARGET_LIST
+        target.model_dump(exclude_none=True, by_alias=True) for target in TARGET_LIST
     ]
     assert response.status_code == 200
     get_jobs.assert_called_once()
@@ -76,7 +76,7 @@ def test_get_target(flask_app, mocker):
     get_jobs_for_target.assert_called_once()
     get_jobs_for_target.assert_called_with("MY_DATASET")
     assert response.status_code == 200
-    assert response.json == [job.dict(by_alias=True) for job in JOB_LIST]
+    assert response.json == [job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST]
 
 
 def test_get_target_none_found(flask_app, mocker):

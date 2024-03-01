@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     QUEUED = "queued"
     INITIATED = "initiated"
     VALIDATING = "validating"
@@ -17,7 +17,7 @@ class JobStatus(str, Enum):
     FAILED = "failed"
 
 
-class Operation(str, Enum):
+class Operation(StrEnum):
     BUMP = "BUMP"
     ADD = "ADD"
     CHANGE = "CHANGE"
@@ -28,7 +28,7 @@ class Operation(str, Enum):
     DELETE_ARCHIVE = "DELETE_ARCHIVE"
 
 
-class ReleaseStatus(str, Enum):
+class ReleaseStatus(StrEnum):
     DRAFT = "DRAFT"
     PENDING_RELEASE = "PENDING_RELEASE"
     PENDING_DELETE = "PENDING_DELETE"

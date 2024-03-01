@@ -45,7 +45,7 @@ def update_target(job: Job) -> None:
             "$set": {
                 "lastUpdatedAt": datetime.now().isoformat(),
                 "status": job.status,
-                "lastUpdatedBy": job.created_by.dict(by_alias=True),
+                "lastUpdatedBy": job.created_by.model_dump(exclude_none=True, by_alias=True),
                 "action": job.get_action(),
             }
         },
@@ -72,7 +72,7 @@ def update_bump_targets(job: Job) -> None:
                 "$set": {
                     "lastUpdatedAt": datetime.now().isoformat(),
                     "status": job.status,
-                    "lastUpdatedBy": job.created_by.dict(by_alias=True),
+                    "lastUpdatedBy": job.created_by.model_dump(exclude_none=True, by_alias=True),
                     "action": [operation, version],
                 }
             },
