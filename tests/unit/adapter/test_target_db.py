@@ -110,7 +110,9 @@ def setup_function():
 
 
 def test_get_targets(mocker: MockFixture):
-    DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[0].model_dump(exclude_none=True, by_alias=True))
+    DB_CLIENT.jobdb.targets.insert_one(
+        TARGET_LIST[0].model_dump(exclude_none=True, by_alias=True)
+    )
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
 
     mocker.patch.object(
@@ -120,7 +122,9 @@ def test_get_targets(mocker: MockFixture):
 
 
 def test_update_target(mocker: MockFixture):
-    DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[0].model_dump(exclude_none=True, by_alias=True))
+    DB_CLIENT.jobdb.targets.insert_one(
+        TARGET_LIST[0].model_dump(exclude_none=True, by_alias=True)
+    )
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
 
     mocker.patch.object(
@@ -142,8 +146,12 @@ def test_update_target(mocker: MockFixture):
 
 
 def test_update_targets_bump(mocker: MockFixture):
-    DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[0].model_dump(exclude_none=True, by_alias=True))
-    DB_CLIENT.jobdb.targets.insert_one(TARGET_LIST[1].model_dump(exclude_none=True, by_alias=True))
+    DB_CLIENT.jobdb.targets.insert_one(
+        TARGET_LIST[0].model_dump(exclude_none=True, by_alias=True)
+    )
+    DB_CLIENT.jobdb.targets.insert_one(
+        TARGET_LIST[1].model_dump(exclude_none=True, by_alias=True)
+    )
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 2
 
     mocker.patch.object(

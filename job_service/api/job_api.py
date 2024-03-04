@@ -23,7 +23,9 @@ job_api = Blueprint("job_api", __name__)
 def get_jobs(query: GetJobRequest):
     logger.debug(f"GET /jobs with query: {query}")
     jobs = job_db.get_jobs(query)
-    return jsonify([job.model_dump(exclude_none=True, by_alias=True) for job in jobs])
+    return jsonify(
+        [job.model_dump(exclude_none=True, by_alias=True) for job in jobs]
+    )
 
 
 @job_api.post("/jobs")

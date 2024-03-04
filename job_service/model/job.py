@@ -86,7 +86,7 @@ class Job(CamelModel, use_enum_values=True):
         return self
 
     def get_action(self) -> list[str]:
-        match (self.parameters.operation):
+        match self.parameters.operation:
             case "SET_STATUS":
                 return [
                     self.parameters.operation,

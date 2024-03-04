@@ -15,7 +15,12 @@ targets_api = Blueprint("targets_api", __name__)
 def get_targets():
     logger.debug("GET /targets")
     targets = target_db.get_targets()
-    return jsonify([target.model_dump(exclude_none=True, by_alias=True) for target in targets])
+    return jsonify(
+        [
+            target.model_dump(exclude_none=True, by_alias=True)
+            for target in targets
+        ]
+    )
 
 
 @targets_api.get("/targets/<name>/jobs")

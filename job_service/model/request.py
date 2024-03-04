@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import root_validator, model_validator
+from pydantic import model_validator
 
 from job_service.exceptions import BadQueryException
 from job_service.model.camelcase_model import CamelModel
@@ -13,7 +13,7 @@ from job_service.model.job import (
     UserInfo,
 )
 
-      
+
 class NewJobRequest(CamelModel, extra="forbid"):
     operation: Operation
     target: str
@@ -28,7 +28,7 @@ class NewJobRequest(CamelModel, extra="forbid"):
         operation = self.operation
         if operation in ["REMOVE", "BUMP"]:
             if self.description is None:
-                raise TypeError (
+                raise TypeError(
                     "Must provide a description when "
                     f"operation is {operation}."
                 )
