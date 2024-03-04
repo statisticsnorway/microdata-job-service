@@ -1,10 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from humps import camelize
-
-
-def to_camel(string):
-    return camelize(string)
-
+from pydantic.alias_generators import to_camel
 
 class CamelModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
