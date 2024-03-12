@@ -35,5 +35,5 @@ def test_new_jobs_requests():
 
 def test_invalid_new_jobs_requests():
     for job in INVALID_JOB_REQUESTS["jobs"]:
-        with pytest.raises(ValidationError):
+        with pytest.raises((ValidationError, TypeError)):
             NewJobRequest(**job)

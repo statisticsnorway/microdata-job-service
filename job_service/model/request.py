@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import Extra, root_validator, ValidationError
+from pydantic import model_validator
 
 from job_service.exceptions import BadQueryException
 from job_service.model.camelcase_model import CamelModel
@@ -14,41 +14,41 @@ from job_service.model.job import (
 )
 
 
-class NewJobRequest(CamelModel, extra=Extra.forbid):
+class NewJobRequest(CamelModel, extra="forbid"):
     operation: Operation
     target: str
-    release_status: Optional[ReleaseStatus]
-    description: Optional[str]
-    bump_manifesto: Optional[DatastoreVersion]
-    bump_from_version: Optional[str]
-    bump_to_version: Optional[str]
+    release_status: Optional[ReleaseStatus] = None
+    description: Optional[str] = None
+    bump_manifesto: Optional[DatastoreVersion] = None
+    bump_from_version: Optional[str] = None
+    bump_to_version: Optional[str] = None
 
-    @root_validator(skip_on_failure=True)
-    def check_command_type(cls, values):  # pylint: disable=no-self-argument
-        operation = values["operation"]
+    @model_validator(mode="after")
+    def check_command_type(self: "NewJobRequest"):  # pylint: disable=no-self-argument
+        operation = self.operation
         if operation in ["REMOVE", "BUMP"]:
-            if values.get("description") is None:
-                raise ValidationError(
+            if self.description is None:
+                raise TypeError(
                     "Must provide a description when "
                     f"operation is {operation}."
                 )
         if operation == "SET_STATUS":
-            if values.get("release_status") is None:
-                raise ValidationError(
+            if self.release_status is None:
+                raise TypeError(
                     "Must provide a releaseStatus when "
                     f"operation is {operation}."
                 )
         if operation == "BUMP":
             if (
-                values.get("bump_manifesto") is None
-                or values.get("bump_from_version") is None
-                or values.get("bump_to_version") is None
+                self.bump_manifesto is None
+                or self.bump_from_version is None
+                or self.bump_to_version is None
             ):
-                raise ValidationError(
+                raise TypeError(
                     "Must provide a bumpManifesto, bumpFromVersion and "
                     f"bumpToVersion when operation is {operation}."
                 )
-        return values
+        return self
 
     def generate_job_from_request(
         self, job_id: str, user_info: UserInfo
@@ -87,36 +87,36 @@ class NewJobRequest(CamelModel, extra=Extra.forbid):
         )
 
 
-class NewJobsRequest(CamelModel, extra=Extra.forbid):
+class NewJobsRequest(CamelModel, extra="forbid"):
     jobs: List[NewJobRequest]
 
 
-class UpdateJobRequest(CamelModel, extra=Extra.forbid):
-    status: Optional[JobStatus]
-    description: Optional[str]
-    log: Optional[str]
+class UpdateJobRequest(CamelModel, extra="forbid"):
+    status: Optional[JobStatus] = None
+    description: Optional[str] = None
+    log: Optional[str] = None
 
 
-class MaintenanceStatusRequest(CamelModel, extra=Extra.forbid):
+class MaintenanceStatusRequest(CamelModel, extra="forbid"):
     msg: str
     paused: bool
 
 
-class GetJobRequest(CamelModel, extra=Extra.forbid, use_enum_values=True):
-    status: Optional[JobStatus]
-    operation: Optional[List[Operation]]
+class GetJobRequest(CamelModel, extra="forbid", use_enum_values=True):
+    status: Optional[JobStatus] = None
+    operation: Optional[List[Operation]] = None
     ignoreCompleted: Optional[bool] = False
 
-    @root_validator(pre=True, skip_on_failure=True)
-    def validate_query(cls, values):  # pylint: disable=no-self-argument
+    @model_validator(mode="after")
+    def validate_query(self: "GetJobRequest"):  # pylint: disable=no-self-argument
         return {
-            "status": values.get("status", None),
+            "status": getattr(self, "status", None),
             "operation": (
                 None
-                if values.get("operation") is None
-                else values.get("operation")[0].split(",")
+                if self.operation is None
+                else self.operation[0].split(",")
             ),
-            "ignoreCompleted": values.get("ignoreCompleted", False),
+            "ignoreCompleted": getattr(self, "ignoreCompleted", False),
         }
 
     def to_mongo_query(self):

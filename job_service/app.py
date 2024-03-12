@@ -14,7 +14,7 @@ from job_service.exceptions import (
     AuthError,
     JobExistsException,
     NotFoundException,
-    NameValidationError
+    NameValidationError,
 )
 from job_service.config.logging import (
     CustomJSONLog,

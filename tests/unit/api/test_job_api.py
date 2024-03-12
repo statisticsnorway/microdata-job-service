@@ -73,10 +73,12 @@ def test_get_jobs(flask_app, mocker: MockFixture):
         url_for(
             "job_api.get_jobs",
             status="completed",
-            operation="ADD,CHANGE,PATCH_METADATA",
+            operation=["ADD", "CHANGE", "PATCH_METADATA"],
         ),
     )
-    assert response.json == [job.dict(by_alias=True) for job in JOB_LIST]
+    assert response.json == [
+        job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
+    ]
     assert response.status_code == 200
     get_jobs.assert_called_once()
 
@@ -87,7 +89,9 @@ def test_get_job(flask_app, mocker: MockFixture):
     get_job.assert_called_once()
     get_job.assert_called_with(JOB_ID)
     assert response.status_code == 200
-    assert response.json == JOB_LIST[0].dict(by_alias=True)
+    assert response.json == JOB_LIST[0].model_dump(
+        exclude_none=True, by_alias=True
+    )
 
 
 def test_get_job_not_found(flask_app, mocker: MockFixture):

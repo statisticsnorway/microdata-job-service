@@ -85,7 +85,7 @@ def test_new_job(mocker: MockFixture):
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
     actual = job_db.get_jobs(GetJobRequest())[0]
-    assert actual.created_by.dict() == USER_INFO.dict()
+    assert actual.created_by.model_dump() == USER_INFO.model_dump()
     assert actual.parameters.target == "NEW_DATASET"
     assert actual.parameters.operation == "ADD"
     with pytest.raises(JobExistsException) as e:
