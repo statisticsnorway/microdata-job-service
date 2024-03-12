@@ -109,7 +109,7 @@ class GetJobRequest(CamelModel, extra="forbid", use_enum_values=True):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_query(cls, values):  # pylint: disable=no-self-argument
+    def validate_query(cls, values: dict):  # pylint: disable=no-self-argument
         return {
             "status": values.get("status") or None,
             "operation": (
