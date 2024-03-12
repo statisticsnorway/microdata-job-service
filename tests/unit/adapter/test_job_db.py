@@ -66,7 +66,6 @@ def test_get_jobs(mocker: MockFixture):
     DB_CLIENT.jobdb.in_progress.insert_one(JOB)
     assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
     assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
-
     mocker.patch.object(job_db, "in_progress", DB_CLIENT.jobdb.in_progress)
     mocker.patch.object(job_db, "completed", DB_CLIENT.jobdb.completed)
     get_job_request = GetJobRequest(status="queued")

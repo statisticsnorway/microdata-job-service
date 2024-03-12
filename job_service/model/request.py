@@ -107,16 +107,17 @@ class GetJobRequest(CamelModel, extra="forbid", use_enum_values=True):
     operation: Optional[List[Operation]] = None
     ignoreCompleted: Optional[bool] = False
 
-    @model_validator(mode="after")
-    def validate_query(self: "GetJobRequest"):  # pylint: disable=no-self-argument
+    @model_validator(mode="before")
+    @classmethod
+    def validate_query(cls, values: dict):  # pylint: disable=no-self-argument
         return {
-            "status": getattr(self, "status", None),
+            "status": values.get("status", None),
             "operation": (
                 None
-                if self.operation is None
-                else self.operation[0].split(",")
+                if values.get("operation") is None
+                else values.get("operation")[0].split(",")
             ),
-            "ignoreCompleted": getattr(self, "ignoreCompleted", False),
+            "ignoreCompleted": values.get("ignoreCompleted") or False,
         }
 
     def to_mongo_query(self):
