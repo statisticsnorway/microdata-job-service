@@ -14,7 +14,7 @@ from job_service.model.job import (
 )
 
 
-class NewJobRequest(CamelModel, extra="forbid"):
+class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
     operation: Operation
     target: str
     release_status: Optional[ReleaseStatus] = None
