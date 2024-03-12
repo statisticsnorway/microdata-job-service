@@ -1,6 +1,6 @@
 from typing import List
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 import pymongo
 from pymongo.results import UpdateResult
@@ -114,7 +114,7 @@ def update_job(job_id: str, body: UpdateJobRequest) -> Job:
     Updates job with supplied job_id with new status.
     Appends additional log if supplied.
     """
-    now = datetime.now()
+    now = datetime.now(UTC).replace(tzinfo=None)
     find_query = {"jobId": job_id}
     job: Job = in_progress.find_one(find_query)
     if job is None:

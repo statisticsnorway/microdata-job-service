@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, Union
 
-from pydantic import model_validator
+from pydantic import model_validator, field_serializer
 
 from job_service.model.camelcase_model import CamelModel
 from job_service.model.enums import JobStatus, ReleaseStatus, Operation
@@ -62,8 +62,9 @@ class Log(CamelModel, extra="forbid"):
     at: datetime
     message: str
 
-    def dict(self, **kwargs):  # pylint: disable=unused-argument
-        return {"at": self.at.isoformat(), "message": self.message}
+    @field_serializer('at')
+    def serialize_dt(self, at: datetime):
+        return at.isoformat()
 
 
 class Job(CamelModel, use_enum_values=True):
@@ -73,17 +74,6 @@ class Job(CamelModel, use_enum_values=True):
     log: Optional[List[Log]] = []
     created_at: str
     created_by: UserInfo
-
-    @model_validator(mode="after")
-    def validate_job_type(self: "Job"):
-        if self.log is None:
-            self.log = [
-                {
-                    "at": datetime.datetime.now(),
-                    "message": "Job generated and queued",
-                }
-            ]
-        return self
 
     def get_action(self) -> list[str]:
         match self.parameters.operation:
