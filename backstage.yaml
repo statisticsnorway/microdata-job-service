@@ -13,6 +13,7 @@ metadata:
     github.com/project-slug: statisticsnorway/job-service
 spec:
   type: service
+  system: microdata
   owner: microdata-developers
   lifecycle: production
   providesApis:
@@ -26,7 +27,8 @@ metadata:
   description: Job service
 spec:
   type: openapi
-  lifecycle: production
+  system: microdata
   owner: microdata-developers
+  lifecycle: production
   definition: 
     $text: .
