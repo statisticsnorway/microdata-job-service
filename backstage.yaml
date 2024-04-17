@@ -10,7 +10,7 @@ metadata:
     - flask
     - pymongo
   annotations:
-    github.com/project-slug: statisticsnorway/job-service
+    github.com/project-slug: statisticsnorway/microdata-job-service
 spec:
   type: service
   system: microdata
@@ -18,7 +18,8 @@ spec:
   lifecycle: production
   providesApis:
     - job-service-api
-
+  dependsOn:
+    - resource:job-db
 ---
 apiVersion: backstage.io/v1alpha1
 kind: API
