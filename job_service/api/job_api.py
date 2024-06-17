@@ -59,7 +59,7 @@ def new_job(body: NewJobsRequest):
         except BumpingDisabledException as e:
             logger.exception(e)
             response_list.append(
-                {"status": "FAILED", "msg": f"FAILED: {str(e)}"}
+                {"status": "FAILED", "msg": "FAILED: Bumping is disabled"}
             )
         except Exception as e:
             logger.exception(e)
