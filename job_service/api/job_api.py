@@ -3,15 +3,15 @@ import logging
 from flask import Blueprint, jsonify, request
 from flask_pydantic import validate
 
-from job_service.api import auth
 from job_service.adapter import job_db, target_db
+from job_service.api import auth
+from job_service.config import environment
 from job_service.exceptions import BumpingDisabledException
 from job_service.model.request import (
     NewJobsRequest,
     UpdateJobRequest,
     GetJobRequest,
 )
-from job_service.config import environment
 
 logger = logging.getLogger()
 
@@ -59,7 +59,10 @@ def new_job(body: NewJobsRequest):
         except BumpingDisabledException as e:
             logger.exception(e)
             response_list.append(
-                {"status": "FAILED", "msg": f"FAILED: {str(e)}"}
+                {
+                    "status": "FAILED",
+                    "msg": "FAILED: Bumping the datastore is disabled",
+                }
             )
         except Exception as e:
             logger.exception(e)
@@ -79,7 +82,8 @@ def get_job(job_id: str):
 @validate()
 def update_job(body: UpdateJobRequest, job_id: str):
     logger.info(
-        f"PUT /jobs/{job_id} with request body: {body.model_dump(exclude_none=True, by_alias=True)}"
+        f"PUT /jobs/{job_id} with request body: "
+        f"{body.model_dump(exclude_none=True, by_alias=True)}"
     )
     job = job_db.update_job(job_id, body)
     target_db.update_target(job)
