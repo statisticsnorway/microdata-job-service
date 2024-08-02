@@ -31,5 +31,5 @@ spec:
   system: microdata
   owner: microdata-developers
   lifecycle: production
-  definition: 
-    $text: .
+  definition:
+    $text: ./doc/openapi.yaml

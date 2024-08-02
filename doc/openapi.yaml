@@ -1,0 +1,347 @@
+openapi: 3.0.0
+info:
+  title: Job service 
+  version: 1.0.0
+paths:
+  /jobs:
+    get:
+      summary: Get all jobs
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+    post:
+      summary: Create new jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewJobsRequest'
+      responses:
+        '200':
+          description: Jobs created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+  /jobs/{job_id}:
+    get:
+      summary: Get job by ID
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+    put:
+      summary: Update job
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJobRequest'
+      responses:
+        '200':
+          description: Job updated
+        '404':
+          description: Job not found
+  /maintenance-status:
+    post:
+      summary: Set maintenance status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceStatusRequest'
+      responses:
+        '200':
+          description: Status set
+    get:
+      summary: Get maintenance status
+      responses:
+        '200':
+          description: Maintenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceStatus'
+  /maintenance-history:
+    get:
+      summary: Get maintenance history
+      responses:
+        '200':
+          description: Maintenance history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceStatus'
+  /importable-datasets:
+    get:
+      summary: Get importable datasets
+      responses:
+        '200':
+          description: List of importable datasets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportableDataset'
+  /importable-datasets/{dataset_name}:
+    delete:
+      summary: Delete an importable dataset
+      parameters:
+        - name: dataset_name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dataset deleted
+  /targets:
+    get:
+      summary: Get all targets
+      responses:
+        '200':
+          description: List of targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Target'
+  /targets/{name}/jobs:
+    get:
+      summary: Get jobs for a target
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of jobs for the target
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+components:
+  schemas:
+    Job:
+      type: object
+      properties:
+        jobId:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        parameters:
+          $ref: '#/components/schemas/JobParameters'
+        log:
+          type: array
+          items:
+            $ref: '#/components/schemas/Log'
+        createdAt:
+          type: string
+        createdBy:
+          $ref: '#/components/schemas/UserInfo'
+    JobStatus:
+      type: string
+      enum: [queued, initiated, validating, decrypting, transforming, pseudonymizing, enriching, converting, partitioning, built, importing, completed, failed]
+    JobParameters:
+      type: object
+      properties:
+        operation:
+          $ref: '#/components/schemas/Operation'
+        target:
+          type: string
+        bumpManifesto:
+          $ref: '#/components/schemas/DatastoreVersion'
+        description:
+          type: string
+        releaseStatus:
+          $ref: '#/components/schemas/ReleaseStatus'
+        bumpFromVersion:
+          type: string
+        bumptoVersion:
+          type: string
+      required:
+        - operation
+        - target
+    Operation:
+      type: string
+      enum: [BUMP, ADD, CHANGE, PATCH_METADATA, SET_STATUS, DELETE_DRAFT, REMOVE, DELETE_ARCHIVE]
+    ReleaseStatus:
+      type: string
+      enum: [DRAFT, PENDING_RELEASE, PENDING_DELETE]
+    DatastoreVersion:
+      type: object
+      properties:
+        version:
+          type: string
+        description:
+          type: string
+        releaseTime:
+          type: integer
+        languageCode:
+          type: string
+        updateType:
+          type: string
+        dataStructureUpdates:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataStructureUpdate'
+    DataStructureUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        operation:
+          type: string
+        releaseStatus:
+          type: string
+    Log:
+      type: object
+      properties:
+        at:
+          type: string
+          format: date-time
+        message:
+          type: string
+    UserInfo:
+      type: object
+      properties:
+        userId:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+    NewJobRequest:
+      type: object
+      properties:
+        operation:
+          $ref: '#/components/schemas/Operation'
+        target:
+          type: string
+        releaseStatus:
+          $ref: '#/components/schemas/ReleaseStatus'
+        description:
+          type: string
+        bumpManifesto:
+          $ref: '#/components/schemas/DatastoreVersion'
+        bumpFromVersion:
+          type: string
+        bumpToVersion:
+          type: string
+      required:
+        - operation
+        - target
+    NewJobsRequest:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewJobRequest'
+      required:
+        - jobs
+    UpdateJobRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        description:
+          type: string
+        log:
+          type: string
+    MaintenanceStatusRequest:
+      type: object
+      properties:
+        msg:
+          type: string
+        paused:
+          type: boolean
+      required:
+        - msg
+        - paused
+    MaintenanceStatus:
+      type: object
+      properties:
+        msg:
+          type: string
+        paused:
+          type: boolean
+        timestamp:
+          type: string
+      required:
+        - msg
+        - paused
+        - timestamp
+    ImportableDataset:
+      type: object
+      properties:
+        datasetName:
+          type: string
+        hasMetadata:
+          type: boolean
+        hasData:
+          type: boolean
+        isArchived:
+          type: boolean
+    Target:
+      type: object
+      properties:
+        name:
+          type: string
+        lastUpdatedAt:
+          type: string
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        lastUpdatedBy:
+          $ref: '#/components/schemas/UserInfo'
+        action:
+          type: array
+          items:
+            type: string
+    GetJobRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        operation:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        ignoreCompleted:
+          type: boolean
