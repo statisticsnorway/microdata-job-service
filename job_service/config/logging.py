@@ -72,7 +72,7 @@ def setup_logging(app, log_level: int = logging.INFO) -> None:
             g.correlation_id = "metadata-service-" + str(uuid.uuid1())
         else:
             g.correlation_id = correlation_id
-            g.method = request.method
+        g.method = request.method
         g.url = request.url
         g.remote_host = request.remote_addr
 
