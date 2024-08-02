@@ -69,7 +69,7 @@ def setup_logging(app, log_level: int = logging.INFO) -> None:
         g.start_time = perf_counter_ns()
         correlation_id = request.headers.get("X-Request-ID", None)
         if correlation_id is None:
-            g.correlation_id = "metadata-service-" + str(uuid.uuid1())
+            g.correlation_id = "job-service-" + str(uuid.uuid1())
         else:
             g.correlation_id = correlation_id
         g.method = request.method
