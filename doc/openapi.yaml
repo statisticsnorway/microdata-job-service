@@ -84,18 +84,34 @@ paths:
       responses:
         '200':
           description: Maintenance status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceStatus'
   /maintenance-history:
     get:
       summary: Get maintenance history
       responses:
         '200':
           description: Maintenance history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MaintenanceStatus'
   /importable-datasets:
     get:
       summary: Get importable datasets
       responses:
         '200':
           description: List of importable datasets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportableDataset'
   /importable-datasets/{dataset_name}:
     delete:
       summary: Delete an importable dataset
@@ -143,7 +159,7 @@ components:
     Job:
       type: object
       properties:
-        job_id:
+        jobId:
           type: string
         status:
           $ref: '#/components/schemas/JobStatus'
@@ -153,9 +169,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Log'
-        created_at:
+        createdAt:
           type: string
-        created_by:
+        createdBy:
           $ref: '#/components/schemas/UserInfo'
     JobStatus:
       type: string
@@ -167,15 +183,15 @@ components:
           $ref: '#/components/schemas/Operation'
         target:
           type: string
-        bump_manifesto:
+        bumpManifesto:
           $ref: '#/components/schemas/DatastoreVersion'
         description:
           type: string
-        release_status:
+        releaseStatus:
           $ref: '#/components/schemas/ReleaseStatus'
-        bump_from_version:
+        bumpFromVersion:
           type: string
-        bump_to_version:
+        bumptoVersion:
           type: string
       required:
         - operation
@@ -193,13 +209,13 @@ components:
           type: string
         description:
           type: string
-        release_time:
+        releaseTime:
           type: integer
-        language_code:
+        languageCode:
           type: string
-        update_type:
+        updateType:
           type: string
-        data_structure_updates:
+        dataStructureUpdates:
           type: array
           items:
             $ref: '#/components/schemas/DataStructureUpdate'
@@ -212,7 +228,7 @@ components:
           type: string
         operation:
           type: string
-        release_status:
+        releaseStatus:
           type: string
     Log:
       type: object
@@ -225,11 +241,11 @@ components:
     UserInfo:
       type: object
       properties:
-        user_id:
+        userId:
           type: string
-        first_name:
+        firstName:
           type: string
-        last_name:
+        lastName:
           type: string
     NewJobRequest:
       type: object
@@ -238,15 +254,15 @@ components:
           $ref: '#/components/schemas/Operation'
         target:
           type: string
-        release_status:
+        releaseStatus:
           $ref: '#/components/schemas/ReleaseStatus'
         description:
           type: string
-        bump_manifesto:
+        bumpManifesto:
           $ref: '#/components/schemas/DatastoreVersion'
-        bump_from_version:
+        bumpFromVersion:
           type: string
-        bump_to_version:
+        bumpToVersion:
           type: string
       required:
         - operation
@@ -279,27 +295,40 @@ components:
       required:
         - msg
         - paused
+    MaintenanceStatus:
+      type: object
+      properties:
+        msg:
+          type: string
+        paused:
+          type: boolean
+        timestamp:
+          type: string
+      required:
+        - msg
+        - paused
+        - timestamp
     ImportableDataset:
       type: object
       properties:
-        dataset_name:
+        datasetName:
           type: string
-        has_metadata:
+        hasMetadata:
           type: boolean
-        has_data:
+        hasData:
           type: boolean
-        is_archived:
+        isArchived:
           type: boolean
     Target:
       type: object
       properties:
         name:
           type: string
-        last_updated_at:
+        lastUpdatedAt:
           type: string
         status:
           $ref: '#/components/schemas/JobStatus'
-        last_updated_by:
+        lastUpdatedBy:
           $ref: '#/components/schemas/UserInfo'
         action:
           type: array
@@ -316,5 +345,3 @@ components:
             $ref: '#/components/schemas/Operation'
         ignoreCompleted:
           type: boolean
-
-
