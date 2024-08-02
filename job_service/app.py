@@ -1,7 +1,4 @@
-import sys
-import uuid
 import logging
-import json_logging
 
 from flask import Flask
 from pydantic import ValidationError
@@ -16,29 +13,10 @@ from job_service.exceptions import (
     NotFoundException,
     NameValidationError,
 )
-from job_service.config.logging import (
-    CustomJSONLog,
-    CustomJSONRequestLogFormatter,
-)
-
-
-def init_json_logging():
-    json_logging.CREATE_CORRELATION_ID_IF_NOT_EXISTS = True
-    json_logging.CORRELATION_ID_GENERATOR = lambda: "job-service-" + str(
-        uuid.uuid1()
-    )
-    json_logging.init_flask(enable_json=True, custom_formatter=CustomJSONLog)
-    json_logging.init_request_instrument(
-        app, custom_formatter=CustomJSONRequestLogFormatter
-    )
+from job_service.config.logging import setup_logging
 
 
 logger = logging.getLogger()
-
-logging.getLogger("flask-request-logger").disabled = True
-
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.StreamHandler(sys.stdout))
 
 app = Flask(__name__)
 app.register_blueprint(job_api)
@@ -46,7 +24,7 @@ app.register_blueprint(importable_datasets_api)
 app.register_blueprint(targets_api)
 app.register_blueprint(maintenance_api)
 
-init_json_logging()
+setup_logging(app)
 
 
 @app.errorhandler(NotFoundException)
