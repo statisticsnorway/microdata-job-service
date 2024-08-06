@@ -14,7 +14,6 @@ pydantic = "^2.6.1"
 PyJWT = "^2.4.0"
 cryptography = "^42.0.4"
 gunicorn = "^22.0.0"
-tomlkit = "^0.10.1"
 
 [tool.poetry.group.dev.dependencies]
 requests = "2.31.0"  # pinning requests until https://github.com/docker/docker-py/issues/3256 resolved
