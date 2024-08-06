@@ -53,5 +53,5 @@ RUN pip install -r requirements.txt
 # Change to our non-root user
 USER microdata
 
-CMD [ "gunicorn", "job_service.app:app", "--bind", "0.0.0.0:8000", "--workers", "1"]
+CMD [ "gunicorn", "--logger-class", "job_service.config.gunicorn.CustomLogger", "job_service.app:app", "--bind", "0.0.0.0:8000", "--workers", "1"]
 
