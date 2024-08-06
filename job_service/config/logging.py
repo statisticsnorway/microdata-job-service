@@ -15,6 +15,7 @@ from job_service.config import environment
 def _get_project_meta():
     with open("pyproject.toml", encoding="utf-8") as pyproject:
         file_contents = pyproject.read()
+
     return tomlkit.parse(file_contents)["tool"]["poetry"]
 
 
@@ -25,12 +26,20 @@ class MicrodataJSONFormatter(logging.Formatter):
         self.command = json.dumps(sys.argv)
 
     def format(self, record: logging.LogRecord) -> str:
+        response_time_ms = getattr(g, "response_time_ms")
+        response_status = getattr(g, "response_status")
+        x_request_id = getattr(g, "correlation_id")
+        request_method = request.method
+        request_remote_addr = request.remote_addr
+        request_url = request.url
+
         return json.dumps(
             {
                 "@timestamp": datetime.datetime.fromtimestamp(
                     record.created,
                     tz=datetime.timezone.utc,
-                ).isoformat(),
+                ).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+                + "Z",
                 "command": self.command,
                 "error.stack": record.__dict__.get("exc_info"),
                 "host": self.host,
@@ -38,18 +47,16 @@ class MicrodataJSONFormatter(logging.Formatter):
                 "level": record.levelno,
                 "levelName": record.levelname,
                 "loggerName": record.name,
-                "method": request.method,
-                "responseTime": getattr(g, "response_time_ms"),
+                "method": request_method,
+                "responseTime": response_time_ms,
                 "schemaVersion": "v3",
                 "serviceName": "job-service",
                 "serviceVersion": str(self.pkg_meta["version"]),
-                "source_host": request.remote_addr,
-                "statusCode": getattr(g, "response_status"),
+                "source_host": request_remote_addr,
+                "statusCode": response_status,
                 "thread": record.threadName,
-                "url": request.url,
-                "xRequestId": re.sub(
-                    r"[^\w\-]", "", request.headers.get("X-Request-ID", "")
-                ),
+                "url": request_url,
+                "xRequestId": re.sub(r"[^\w\-]", "", x_request_id),
             }
         )
 
@@ -57,15 +64,15 @@ class MicrodataJSONFormatter(logging.Formatter):
 def setup_logging(app, log_level: int = logging.INFO) -> None:
     logger = logging.getLogger()
     logger.setLevel(log_level)
-
     formatter = MicrodataJSONFormatter()
-
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
     @app.before_request
     def before_request():
+        g.response_time_ms = 0
+        g.response_status = ""
         g.start_time = perf_counter_ns()
         correlation_id = request.headers.get("X-Request-ID", None)
         if correlation_id is None:
@@ -83,4 +90,5 @@ def setup_logging(app, log_level: int = logging.INFO) -> None:
         )
         g.response_status = response.status_code
         response.headers["X-Request-ID"] = g.correlation_id
+        logger.info("responded")
         return response
