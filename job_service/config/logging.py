@@ -1,58 +1,93 @@
-import json
+import re
 import sys
+import uuid
+import json
+import logging
+import datetime
+from time import perf_counter_ns
 
-import json_logging
+from flask import request, g
 
 from job_service.config import environment
 
-commit_id = environment.get("COMMIT_ID")
-service_name = "job-service"
-host = environment.get("DOCKER_HOST_NAME")
-command = json.dumps(sys.argv)
+
+def _get_project_meta():
+    with open("pyproject.toml", encoding="utf-8") as pyproject:
+        file_contents = pyproject.read()
+
+    return tomlkit.parse(file_contents)["tool"]["poetry"]
 
 
-class CustomJSONLog(json_logging.JSONLogWebFormatter):
-    """
-    Customized application logger
-    """
+class MicrodataJSONFormatter(logging.Formatter):
+    def __init__(self):
+        self.pkg_meta = _get_project_meta()
+        self.host = environment.get("DOCKER_HOST_NAME")
+        self.command = json.dumps(sys.argv)
 
-    def _format_log_object(self, record, request_util):
-        json_log_object = super(CustomJSONLog, self)._format_log_object(
-            record, request_util
+    def format(self, record: logging.LogRecord) -> str:
+        response_time_ms = getattr(g, "response_time_ms")
+        response_status = getattr(g, "response_status")
+        x_request_id = getattr(g, "correlation_id")
+        request_method = request.method
+        request_remote_addr = request.remote_addr
+        request_url = request.url
+
+        return json.dumps(
+            {
+                "@timestamp": datetime.datetime.fromtimestamp(
+                    record.created,
+                    tz=datetime.timezone.utc,
+                ).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+                + "Z",
+                "command": self.command,
+                "error.stack": record.__dict__.get("exc_info"),
+                "host": self.host,
+                "message": record.getMessage(),
+                "level": record.levelno,
+                "levelName": record.levelname,
+                "loggerName": record.name,
+                "method": request_method,
+                "responseTime": response_time_ms,
+                "schemaVersion": "v3",
+                "serviceName": "job-service",
+                "serviceVersion": str(self.pkg_meta["version"]),
+                "source_host": request_remote_addr,
+                "statusCode": response_status,
+                "thread": record.threadName,
+                "url": request_url,
+                "xRequestId": re.sub(r"[^\w\-]", "", x_request_id),
+            }
         )
-        return create_microdata_json_log(json_log_object, record)
 
 
-class CustomJSONRequestLogFormatter(json_logging.JSONRequestLogFormatter):
-    """
-    Customized request logger
-    """
+def setup_logging(app, log_level: int = logging.INFO) -> None:
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+    formatter = MicrodataJSONFormatter()
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
-    def _format_log_object(self, record, request_util):
-        json_log_object = super(
-            CustomJSONRequestLogFormatter, self
-        )._format_log_object(record, request_util)
-        return create_microdata_json_log(json_log_object, record)
+    @app.before_request
+    def before_request():
+        g.response_time_ms = 0
+        g.response_status = ""
+        g.start_time = perf_counter_ns()
+        correlation_id = request.headers.get("X-Request-ID", None)
+        if correlation_id is None:
+            g.correlation_id = "job-service-" + str(uuid.uuid1())
+        else:
+            g.correlation_id = correlation_id
+        g.method = request.method
+        g.url = request.url
+        g.remote_host = request.remote_addr
 
-
-def create_microdata_json_log(json_log_object, record):
-    return {
-        "@timestamp": json_log_object["written_at"],
-        "command": command,
-        "error.stack": json_log_object.get("exc_info"),
-        "host": host,
-        "message": record.getMessage(),
-        "level": record.levelno,
-        "levelName": record.levelname,
-        "loggerName": record.name,
-        "method": json_log_object.get("method"),
-        "responseTime": json_log_object.get("response_time_ms"),
-        "schemaVersion": "v3",
-        "serviceName": service_name,
-        "serviceVersion": commit_id,
-        "source_host": json_log_object.get("remote_host"),
-        "statusCode": json_log_object.get("response_status"),
-        "thread": record.threadName,
-        "url": json_log_object.get("request"),
-        "xRequestId": json_log_object.get("correlation_id"),
-    }
+    @app.after_request
+    def after_request(response):
+        g.response_time_ms = int(
+            (perf_counter_ns() - g.start_time) / 1_000_000
+        )
+        g.response_status = response.status_code
+        response.headers["X-Request-ID"] = g.correlation_id
+        logger.info("responded")
+        return response

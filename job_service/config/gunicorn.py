@@ -18,11 +18,11 @@ class CustomLogger(glogging.Logger):
                 fmt=(
                     '{"@timestamp": "%(asctime)s",'
                     '"pid": "%(process)d", '
-                    '"loggerName": "guvicorn_custom",'
+                    '"loggerName": "gunicorn_custom",'
                     '"levelName": "%(levelname)s",'
                     '"schemaVersion": "v3",'
                     '"serviceVersion": "TODO",'
-                    '"serviceName": "pseudonym-service",'
+                    '"serviceName": "job-service",'
                     '"xRequestId": "TODO",'
                     '"message": "%(message)s}"'
                 ),
