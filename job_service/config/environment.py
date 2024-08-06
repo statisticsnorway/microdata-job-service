@@ -17,6 +17,7 @@ def _initialize_environment() -> dict:
             if os.environ.get("BUMP_ENABLED", "false") == "true"
             else False
         ),
+        "COMMIT_ID": os.environ["COMMIT_ID"]
     }
 
 

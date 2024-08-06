@@ -2,19 +2,10 @@ import json
 import sys
 
 import json_logging
-import tomlkit
 
 from job_service.config import environment
 
-
-def _get_project_meta():
-    with open("pyproject.toml", encoding="utf-8") as pyproject:
-        file_contents = pyproject.read()
-
-    return tomlkit.parse(file_contents)["tool"]["poetry"]
-
-
-pkg_meta = _get_project_meta()
+commit_id = environment.get("COMMIT_ID")
 service_name = "job-service"
 host = environment.get("DOCKER_HOST_NAME")
 command = json.dumps(sys.argv)
@@ -58,7 +49,7 @@ def create_microdata_json_log(json_log_object, record):
         "responseTime": json_log_object.get("response_time_ms"),
         "schemaVersion": "v3",
         "serviceName": service_name,
-        "serviceVersion": str(pkg_meta["version"]),
+        "serviceVersion": commit_id,
         "source_host": json_log_object.get("remote_host"),
         "statusCode": json_log_object.get("response_status"),
         "thread": record.threadName,
