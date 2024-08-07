@@ -6,24 +6,16 @@ import logging
 import datetime
 from time import perf_counter_ns
 
-import tomlkit
 from flask import request, g
 
 from job_service.config import environment
 
 
-def _get_project_meta():
-    with open("pyproject.toml", encoding="utf-8") as pyproject:
-        file_contents = pyproject.read()
-
-    return tomlkit.parse(file_contents)["tool"]["poetry"]
-
-
 class MicrodataJSONFormatter(logging.Formatter):
     def __init__(self):
-        self.pkg_meta = _get_project_meta()
         self.host = environment.get("DOCKER_HOST_NAME")
         self.command = json.dumps(sys.argv)
+        self.commit_id = environment.get("COMMIT_ID")
 
     def format(self, record: logging.LogRecord) -> str:
         response_time_ms = getattr(g, "response_time_ms")
@@ -51,7 +43,7 @@ class MicrodataJSONFormatter(logging.Formatter):
                 "responseTime": response_time_ms,
                 "schemaVersion": "v3",
                 "serviceName": "job-service",
-                "serviceVersion": str(self.pkg_meta["version"]),
+                "serviceVersion": self.commit_id,
                 "source_host": request_remote_addr,
                 "statusCode": response_status,
                 "thread": record.threadName,
