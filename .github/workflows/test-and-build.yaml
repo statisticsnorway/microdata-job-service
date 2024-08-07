@@ -79,7 +79,7 @@ jobs:
           tags: ${{ steps.build_metadata.outputs.tags }}
           labels: ${{ steps.build_metadata.outputs.labels }}
           build-args: |
-            COMMIT_ID="$GITHUB_SHA"
+            COMMIT_ID=${{ github.sha }}
 
   integration-test:
     name: Run Integration test
