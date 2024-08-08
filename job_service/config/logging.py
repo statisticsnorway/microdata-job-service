@@ -6,7 +6,7 @@ import logging
 import datetime
 from time import perf_counter_ns
 
-from flask import request, g
+from flask import request, g, has_request_context
 
 from job_service.config import environment
 
@@ -18,12 +18,10 @@ class MicrodataJSONFormatter(logging.Formatter):
         self.commit_id = environment.get("COMMIT_ID")
 
     def format(self, record: logging.LogRecord) -> str:
-        response_time_ms = getattr(g, "response_time_ms")
-        response_status = getattr(g, "response_status")
-        x_request_id = getattr(g, "correlation_id")
-        request_method = request.method
-        request_remote_addr = request.remote_addr
-        request_url = request.url
+        flask_context = _get_flask_context()
+        stack_trace = ""
+        if record.exc_info is not None:
+            stack_trace = self.formatException(record.exc_info)
 
         return json.dumps(
             {
@@ -33,24 +31,53 @@ class MicrodataJSONFormatter(logging.Formatter):
                 ).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
                 + "Z",
                 "command": self.command,
-                "error.stack": record.__dict__.get("exc_info"),
+                "error.stack": stack_trace,
                 "host": self.host,
                 "message": record.getMessage(),
                 "level": record.levelno,
                 "levelName": record.levelname,
                 "loggerName": record.name,
-                "method": request_method,
-                "responseTime": response_time_ms,
+                "method": flask_context["request_method"],
+                "responseTime": flask_context["response_time_ms"],
                 "schemaVersion": "v3",
                 "serviceName": "job-service",
                 "serviceVersion": self.commit_id,
-                "source_host": request_remote_addr,
-                "statusCode": response_status,
+                "source_host": flask_context["request_remote_addr"],
+                "statusCode": flask_context["response_status"],
                 "thread": record.threadName,
-                "url": request_url,
-                "xRequestId": re.sub(r"[^\w\-]", "", x_request_id),
+                "url": flask_context["request_url"],
+                "xRequestId": re.sub(
+                    r"[^\w\-]", "", flask_context["x_request_id"]
+                ),
             }
         )
+
+
+def _get_flask_context():
+    # Logging should not fail outside of flask context
+    flask_context = {
+        "response_time_ms": "",
+        "response_status": "",
+        "x_request_id": "",
+        "request_method": "",
+        "request_remote_addr": "",
+        "request_url": "",
+    }
+    if not has_request_context():
+        return flask_context
+    try:
+        flask_context["response_time_ms"] = getattr(g, "response_time_ms")
+        flask_context["response_status"] = getattr(g, "response_status")
+        flask_context["x_request_id"] = getattr(g, "correlation_id")
+    except AttributeError:
+        ...
+    try:
+        flask_context["request_method"] = request.method
+        flask_context["request_remote_addr"] = request.remote_addr
+        flask_context["request_url"] = request.url
+    except AttributeError:
+        ...
+    return flask_context
 
 
 def setup_logging(app, log_level: int = logging.INFO) -> None:
