@@ -29,7 +29,7 @@ setup_logging(app)
 
 @app.errorhandler(NotFoundException)
 def handle_not_found(e):
-    logger.exception(e)
+    logger.warning(e, exc_info=True)
     return {"message": str(e)}, 404
 
 
