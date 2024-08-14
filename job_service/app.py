@@ -35,19 +35,19 @@ def handle_not_found(e):
 
 @app.errorhandler(ValidationError)
 def handle_bad_request(e):
-    logger.exception(e)
+    logger.warning(e, exc_info=True)
     return {"message": str(e)}, 400
 
 
 @app.errorhandler(JobExistsException)
 def handle_job_exists(e):
-    logger.exception(e)
+    logger.warning(e, exc_info=True)
     return {"message": str(e)}, 400
 
 
 @app.errorhandler(AuthError)
 def handle_auth_error(e):
-    logger.exception(e)
+    logger.warning(e, exc_info=True)
     return {"message": str(e)}, 401
 
 
@@ -59,7 +59,7 @@ def handle_unknown_error(e):
 
 @app.errorhandler(NameValidationError)
 def handle_invalid_name(e):
-    logger.exception(e)
+    logger.warning(e, exc_info=True)
     return {"message": str(e)}, 400
 
 
