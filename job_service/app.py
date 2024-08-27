@@ -68,11 +68,11 @@ def handle_invalid_name(e):
 def handle_http_exception(e: HTTPException):
     if str(e.code).startswith("4"):
         logger.warning(e, exc_info=True)
-        error_message = str(e)
+        error_message = str(e.description)
     else:
         logger.exception(e)
         error_message = "Internal Server Error"
-    return {"message": {error_message}}, e.code
+    return {"message": f"{error_message}"}, e.code
 
 
 # this is needed to run the application in IDE
