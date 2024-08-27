@@ -2,6 +2,7 @@ import logging
 
 from flask import Flask
 from pydantic import ValidationError
+from werkzeug.exceptions import HTTPException
 
 from job_service.api.job_api import job_api
 from job_service.api.targets_api import targets_api
@@ -61,6 +62,15 @@ def handle_unknown_error(e):
 def handle_invalid_name(e):
     logger.warning(e, exc_info=True)
     return {"message": str(e)}, 400
+
+
+@app.errorhandler(HTTPException)
+def handle_http_exception(e: HTTPException):
+    if str(e.code).startswith("4"):
+        logger.warning(e, exc_info=True)
+    else:
+        logger.exception(e)
+    return {"message": f"{str(e.description)}"}, e.code
 
 
 # this is needed to run the application in IDE
