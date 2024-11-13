@@ -198,7 +198,7 @@ components:
         - target
     Operation:
       type: string
-      enum: [BUMP, ADD, CHANGE, PATCH_METADATA, SET_STATUS, DELETE_DRAFT, REMOVE, DELETE_ARCHIVE]
+      enum: [BUMP, ADD, CHANGE, PATCH_METADATA, SET_STATUS, DELETE_DRAFT, REMOVE, ROLLBACK_REMOVE, DELETE_ARCHIVE]
     ReleaseStatus:
       type: string
       enum: [DRAFT, PENDING_RELEASE, PENDING_DELETE]
