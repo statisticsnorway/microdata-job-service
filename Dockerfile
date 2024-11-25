@@ -30,27 +30,30 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl --proto '=https' --tlsv1.2 -sSL https://install.python-poetry.org | python3 - --version "$POETRY_VERSION"
 
 RUN poetry export > requirements.txt
-
-# Production image
-FROM python:3.12-slim
-ARG COMMIT_ID
-ENV COMMIT_ID=$COMMIT_ID
-RUN echo "Commit ID: $COMMIT_ID"
+RUN pip install -r requirements.txt --target=/app/dependencies
 
 # Create user
 RUN groupadd --gid 180291 microdata \
     && useradd --uid 180291 --gid microdata microdata
 
+
+# Production image
+FROM ghcr.io/statisticsnorway/distroless-python3.12
+ARG COMMIT_ID
+ENV COMMIT_ID=$COMMIT_ID
+
 WORKDIR /app
 COPY job_service job_service
 #To use application version in logs
 COPY --from=builder /app/pyproject.toml pyproject.toml
-COPY --from=builder /app/requirements.txt requirements.txt
+COPY --from=builder /app/dependencies /app/dependencies
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
 
-RUN pip install -r requirements.txt
+ENV PYTHONPATH "${PYTHONPATH}:/app:/app/dependencies"
 
 # Change to our non-root user
 USER microdata
 
-CMD [ "gunicorn", "--logger-class", "job_service.config.gunicorn.CustomLogger", "job_service.app:app", "--bind", "0.0.0.0:8000", "--workers", "1"]
+CMD [ "/app/dependencies/bin/gunicorn", "--logger-class", "job_service.config.gunicorn.CustomLogger", "job_service.app:app", "--bind", "0.0.0.0:8000", "--workers", "1"]
 
