@@ -267,22 +267,18 @@ poetry run pytest --cov=job_service/
 If you want to test the service completely in your local environment:
 * Run `docker compose up` in `test/resources/local` to run a mongodb instance in docker
 * Set environmental variables on your system:
-MONGODB_URL=mongodb://localhost:27017/jobdb
 ```
+export MONGODB_URL=mongodb://localhost:27017/jobdb \
 export MONGODB_USER=USER \
 export MONGODB_PASSWORD=123 \
 export INPUT_DIR=tests/resources/input_directory \
-export DOCKER_HOST_NAME=localhost
+export DOCKER_HOST_NAME=localhost \
+export JWKS_URL=http://dummy \
+export SECRETS_FILE=tests/resources/secrets/secrets.json \
+export STACK=local \
+export COMMIT_ID=abc123
 ```
 * Run application from root directory: ```poetry run gunicorn job_service.app:app```
-
-### Running on server
-Build the mongo image locally, tag it and push it to Nexus so it is available for Jenkins in secure zone:
-```
-docker pull mongo:5
-sudo docker tag mongo:5 nexus.ssb.no:8443/raird/mongo:latest
-sudo docker push nexus.ssb.no:8443/raird/mongo:latest
-```
 
 ## Built with
 * [Poetry](https://python-poetry.org/) - Python dependency and package management

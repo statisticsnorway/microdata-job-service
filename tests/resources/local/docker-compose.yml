@@ -2,20 +2,13 @@
 # running instance of mongodb.
 #
 # * fill in <local-persistent-directory>
-# * Run: docker compose up
-# * Set environmental variables for application:
-# MONGODB_URL=mongodb://localhost:27017/jobdb
-# MONGODB_USER=USER
-# MONGODB_USER=USER
-# INPUT_DIR=test/resources/input_directory
-#
-# poetry run gunicorn job_service.app:app
+# * Follow the guide in README.md at "Running locally"
 
 version: '2'
 
 services:
   mongodbdb:
-    image: mongo:5
+    image: mongo:7
     ports:
       - "27017:27017"
     environment:
