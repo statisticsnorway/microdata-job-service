@@ -8,6 +8,7 @@ from job_service.api.job_api import job_api
 from job_service.api.targets_api import targets_api
 from job_service.api.importable_datasets_api import importable_datasets_api
 from job_service.api.maintenance_api import maintenance_api
+from job_service.api.observability_api import observability_api
 from job_service.exceptions import (
     AuthError,
     JobExistsException,
@@ -24,6 +25,7 @@ app.register_blueprint(job_api)
 app.register_blueprint(importable_datasets_api)
 app.register_blueprint(targets_api)
 app.register_blueprint(maintenance_api)
+app.register_blueprint(observability_api)
 
 setup_logging(app)
 
