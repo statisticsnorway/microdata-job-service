@@ -62,7 +62,7 @@ class Log(CamelModel, extra="forbid"):
     at: datetime
     message: str
 
-    @field_serializer('at')
+    @field_serializer("at")
     def serialize_dt(self, at: datetime):
         return at.isoformat()
 
