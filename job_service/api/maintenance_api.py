@@ -24,7 +24,7 @@ def get_status():
     document = maintenance_db.get_latest_status()
     if "paused" in document and document["paused"]:
         logger.info(
-            f'GET /maintenance-status, paused: {document["paused"]}, msg: {document["msg"]}'
+            f"GET /maintenance-status, paused: {document['paused']}, msg: {document['msg']}"
         )
     return jsonify(document), 200
 
