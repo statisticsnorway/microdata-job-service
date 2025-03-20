@@ -58,7 +58,10 @@ def test_set_maintenance_status_with_no_msg(flask_app, mocker: MockFixture):
 
     db_set_status.assert_not_called()
     assert response.status_code == 400
-    assert "validation_error" in response.json
+    assert (
+        "1 validation error for MaintenanceStatusRequest"
+        in response.json.get("message")
+    )
 
 
 def test_set_maintenance_status_with_invalid_paused(
@@ -72,7 +75,10 @@ def test_set_maintenance_status_with_invalid_paused(
 
     db_set_status.assert_not_called()
     assert response.status_code == 400
-    assert "validation_error" in response.json
+    assert (
+        "1 validation error for MaintenanceStatusRequest"
+        in response.json.get("message")
+    )
 
 
 def test_get_maintenance_status(flask_app, mocker: MockFixture, caplog):
@@ -86,7 +92,7 @@ def test_get_maintenance_status(flask_app, mocker: MockFixture, caplog):
     assert response.status_code == 200
     assert response.json == RESPONSE_FROM_DB[0]
     assert (
-        "INFO     root:maintenance_api.py:26 GET /maintenance-status, paused: 1, "
+        "GET /maintenance-status, paused: 1, "
         "msg: Today is 2023-08-31, we need to upgrade again\n" in caplog.text
     )
 

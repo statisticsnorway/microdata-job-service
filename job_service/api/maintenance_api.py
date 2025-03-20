@@ -1,7 +1,6 @@
 import logging
 
-from flask import Blueprint, jsonify
-from flask_pydantic import validate
+from flask import Blueprint, jsonify, request
 
 from job_service.adapter import maintenance_db
 from job_service.model.request import MaintenanceStatusRequest
@@ -12,10 +11,12 @@ maintenance_api = Blueprint("maintenance_api", __name__)
 
 
 @maintenance_api.post("/maintenance-status")
-@validate()
-def set_status(body: MaintenanceStatusRequest):
-    logger.info(f"POST /maintenance-status with request body: {body}")
-    new_status = maintenance_db.set_status(body)
+def set_status():
+    body_validated = MaintenanceStatusRequest(**request.json)
+    logger.info(
+        f"POST /maintenance-status with request body: {body_validated}"
+    )
+    new_status = maintenance_db.set_status(body_validated)
     return jsonify(new_status), 200
 
 
