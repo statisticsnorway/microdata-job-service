@@ -21,7 +21,8 @@ def get_jobs():
     validated_query = GetJobRequest(
         status=request.args.get("status"),
         operation=request.args.getlist("operation") or None,
-        ignoreCompleted=request.args.get("ignoreCompleted"))
+        ignoreCompleted=request.args.get("ignoreCompleted"),
+    )
     logger.debug(f"GET /jobs with query: {validated_query}")
     jobs = job_db.get_jobs(validated_query)
     return jsonify(
