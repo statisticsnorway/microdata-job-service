@@ -70,11 +70,11 @@ UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
 def test_get_jobs(flask_app, mocker: MockFixture):
     get_jobs = mocker.patch.object(job_db, "get_jobs", return_value=JOB_LIST)
     response = flask_app.get(
-        "/jobs",
-        json={
-            "status": "completed",
-            "operation": ["ADD", "CHANGE", "PATCH_METADATA"],
-        },
+        url_for(
+            "job_api.get_jobs",
+            status="completed",
+            operation=["ADD", "CHANGE", "PATCH_METADATA"],
+        ),
     )
     assert response.json == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST

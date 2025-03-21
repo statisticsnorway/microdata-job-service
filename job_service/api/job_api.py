@@ -18,9 +18,12 @@ job_api = Blueprint("job_api", __name__)
 
 @job_api.get("/jobs")
 def get_jobs():
-    query_validated = GetJobRequest(**request.json)
-    logger.debug(f"GET /jobs with query: {query_validated}")
-    jobs = job_db.get_jobs(query_validated)
+    validated_query = GetJobRequest(
+        status=request.args.get("status"),
+        operation=request.args.getlist("operation") or None,
+        ignoreCompleted=request.args.get("ignoreCompleted"))
+    logger.debug(f"GET /jobs with query: {validated_query}")
+    jobs = job_db.get_jobs(validated_query)
     return jsonify(
         [job.model_dump(exclude_none=True, by_alias=True) for job in jobs]
     )
@@ -28,13 +31,13 @@ def get_jobs():
 
 @job_api.post("/jobs")
 def new_job():
-    body_validated = NewJobsRequest(**request.json)
-    logger.info(f"POST /jobs with request body: {body_validated}")
+    validated_body = NewJobsRequest(**request.json)
+    logger.info(f"POST /jobs with request body: {validated_body}")
     user_info = auth.authorize_user(
         request.cookies.get("authorization"), request.cookies.get("user-info")
     )
     response_list = []
-    for job_request in body_validated.jobs:
+    for job_request in validated_body.jobs:
         try:
             if (
                 job_request.target == "DATASTORE"
@@ -77,12 +80,12 @@ def get_job(job_id: str):
 
 @job_api.put("/jobs/<job_id>")
 def update_job(job_id: str):
-    body_validated = UpdateJobRequest(**request.json)
+    validated_body = UpdateJobRequest(**request.json)
     logger.info(
         f"PUT /jobs/{job_id} with request body: "
-        f"{body_validated.model_dump(exclude_none=True, by_alias=True)}"
+        f"{validated_body.model_dump(exclude_none=True, by_alias=True)}"
     )
-    job = job_db.update_job(job_id, body_validated)
+    job = job_db.update_job(job_id, validated_body)
     target_db.update_target(job)
     if job.parameters.target == "DATASTORE" and job.status == "completed":
         target_db.update_bump_targets(job)
