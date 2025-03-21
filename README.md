@@ -54,7 +54,6 @@ _____
 >  
 >  ```curl -X POST <url>/jobs -d '{"jobs": [{...}, {...}]}'```
 ></details>
-></details>
 ><details>
 >  <summary>Responses</summary>
 >
@@ -137,7 +136,6 @@ _____
 >  
 >  ```curl -X GET <url>/targets```
 ></details>
-></details>
 ><details>
 >  <summary>Responses</summary>
 >
@@ -156,7 +154,6 @@ _____
 >  <summary>Example request</summary>
 >  
 >  ```curl -X GET <url>/targets/<name>/jobs```
-></details>
 ></details>
 ><details>
 _____
@@ -205,7 +202,6 @@ _____
 >  <summary>Example request</summary>
 >
 >  ```curl -X GET <url>/maintenance-history```
-></details>
 ></details>
 ><details>
 >  <summary>Responses</summary>
