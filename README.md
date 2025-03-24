@@ -261,7 +261,7 @@ poetry run pytest --cov=job_service/
 
 ### Running locally
 If you want to test the service completely in your local environment:
-* Run `docker compose up` in `test/resources/local` to run a mongodb instance in docker
+* Run `docker compose up` in `tests/resources/local` to run a mongodb instance in docker
 * Set environmental variables on your system:
 ```
 export MONGODB_URL=mongodb://localhost:27017/jobdb \
@@ -272,6 +272,7 @@ export DOCKER_HOST_NAME=localhost \
 export JWKS_URL=http://dummy \
 export SECRETS_FILE=tests/resources/secrets/secrets.json \
 export STACK=local \
+export JWT_AUTH=false \
 export COMMIT_ID=abc123
 ```
 * Run application from root directory: ```poetry run gunicorn job_service.app:app```

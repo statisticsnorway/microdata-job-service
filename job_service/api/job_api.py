@@ -18,9 +18,12 @@ job_api = Blueprint("job_api", __name__)
 
 @job_api.get("/jobs")
 def get_jobs():
+    operation_arg = request.args.get("operation") or None
     validated_query = GetJobRequest(
         status=request.args.get("status"),
-        operation=request.args.getlist("operation") or None,
+        operation=operation_arg.split(",")
+        if operation_arg is not None
+        else None,
         ignoreCompleted=request.args.get("ignoreCompleted"),
     )
     logger.debug(f"GET /jobs with query: {validated_query}")

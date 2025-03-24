@@ -6,7 +6,10 @@ from job_service.api import auth
 from job_service.config import environment
 from job_service.exceptions import NotFoundException
 from job_service.model.job import Job, UserInfo
-from job_service.model.request import NewJobRequest, UpdateJobRequest
+from job_service.model.request import (
+    NewJobRequest,
+    UpdateJobRequest,
+)
 
 NOT_FOUND_MESSAGE = "not found"
 JOB_ID = "123-123-123-123"
