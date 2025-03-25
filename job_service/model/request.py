@@ -112,11 +112,7 @@ class GetJobRequest(CamelModel, extra="forbid", use_enum_values=True):
     def validate_query(cls, values: dict):  # pylint: disable=no-self-argument
         return {
             "status": values.get("status", None),
-            "operation": (
-                None
-                if values.get("operation") is None
-                else values.get("operation")[0].split(",")
-            ),
+            "operation": values.get("operation", None),
             "ignoreCompleted": values.get("ignoreCompleted") or False,
         }
 

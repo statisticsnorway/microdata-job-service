@@ -1,8 +1,6 @@
 import logging
 
 from flask import Blueprint, jsonify, request
-from flask_pydantic import validate
-
 from job_service.adapter import job_db, target_db
 from job_service.api import auth
 from job_service.config import environment
@@ -19,24 +17,31 @@ job_api = Blueprint("job_api", __name__)
 
 
 @job_api.get("/jobs")
-@validate()
-def get_jobs(query: GetJobRequest):
-    logger.debug(f"GET /jobs with query: {query}")
-    jobs = job_db.get_jobs(query)
+def get_jobs():
+    operation_arg = request.args.get("operation") or None
+    validated_query = GetJobRequest(
+        status=request.args.get("status"),
+        operation=operation_arg.split(",")
+        if operation_arg is not None
+        else None,
+        ignoreCompleted=request.args.get("ignoreCompleted"),
+    )
+    logger.debug(f"GET /jobs with query: {validated_query}")
+    jobs = job_db.get_jobs(validated_query)
     return jsonify(
         [job.model_dump(exclude_none=True, by_alias=True) for job in jobs]
     )
 
 
 @job_api.post("/jobs")
-@validate()
-def new_job(body: NewJobsRequest):
-    logger.info(f"POST /jobs with request body: {body}")
+def new_job():
+    validated_body = NewJobsRequest(**request.json)
+    logger.info(f"POST /jobs with request body: {validated_body}")
     user_info = auth.authorize_user(
         request.cookies.get("authorization"), request.cookies.get("user-info")
     )
     response_list = []
-    for job_request in body.jobs:
+    for job_request in validated_body.jobs:
         try:
             if (
                 job_request.target == "DATASTORE"
@@ -71,7 +76,6 @@ def new_job(body: NewJobsRequest):
 
 
 @job_api.get("/jobs/<job_id>")
-@validate()
 def get_job(job_id: str):
     logger.info(f"GET /jobs/{job_id}")
     job = job_db.get_job(job_id)
@@ -79,13 +83,13 @@ def get_job(job_id: str):
 
 
 @job_api.put("/jobs/<job_id>")
-@validate()
-def update_job(body: UpdateJobRequest, job_id: str):
+def update_job(job_id: str):
+    validated_body = UpdateJobRequest(**request.json)
     logger.info(
         f"PUT /jobs/{job_id} with request body: "
-        f"{body.model_dump(exclude_none=True, by_alias=True)}"
+        f"{validated_body.model_dump(exclude_none=True, by_alias=True)}"
     )
-    job = job_db.update_job(job_id, body)
+    job = job_db.update_job(job_id, validated_body)
     target_db.update_target(job)
     if job.parameters.target == "DATASTORE" and job.status == "completed":
         target_db.update_bump_targets(job)

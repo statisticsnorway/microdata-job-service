@@ -1,12 +1,15 @@
 from flask import url_for
 from pytest_mock import MockFixture
 
-from job_service.api import auth
-from job_service.exceptions import NotFoundException
 from job_service.adapter import job_db, target_db
-from job_service.model.job import Job, UserInfo
-from job_service.model.request import NewJobRequest, UpdateJobRequest
+from job_service.api import auth
 from job_service.config import environment
+from job_service.exceptions import NotFoundException
+from job_service.model.job import Job, UserInfo
+from job_service.model.request import (
+    NewJobRequest,
+    UpdateJobRequest,
+)
 
 NOT_FOUND_MESSAGE = "not found"
 JOB_ID = "123-123-123-123"
@@ -152,7 +155,9 @@ def test_update_job_bad_request(flask_app, mocker: MockFixture):
     )
     update_target.assert_not_called()
     assert response.status_code == 400
-    assert "validation_error" in response.json
+    assert "validation error for UpdateJobRequest" in response.json.get(
+        "message"
+    )
 
 
 def test_update_job_disabled_bump(flask_app, mocker: MockFixture):

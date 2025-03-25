@@ -449,22 +449,6 @@ async = ["asgiref (>=3.2)"]
 dotenv = ["python-dotenv"]
 
 [[package]]
-name = "flask-pydantic"
-version = "0.12.0"
-description = "Flask extension for integration with Pydantic library"
-optional = false
-python-versions = ">=3.7"
-groups = ["main"]
-files = [
-    {file = "Flask-Pydantic-0.12.0.tar.gz", hash = "sha256:b80f18cc7efe332b47eafbae141541e9875777132ba30d7c95f9fef9bf2a6977"},
-    {file = "Flask_Pydantic-0.12.0-py3-none-any.whl", hash = "sha256:c80825d74eefa137d8d7f2396f6b376ee128329196d79eff1442bcfd816a6228"},
-]
-
-[package.dependencies]
-Flask = "*"
-pydantic = ">=2.0"
-
-[[package]]
 name = "gunicorn"
 version = "23.0.0"
 description = "WSGI HTTP Server for UNIX"
@@ -1248,4 +1232,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "998b4ca1fa2ff701b09fc2442bc33b06ec345f83cf1e6435e79d37a8b34e4025"
+content-hash = "e83d2b08bc922449a0e20aa31fa6adf93b082733286d994bb2ad4d5be510f532"
