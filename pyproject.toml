@@ -15,7 +15,7 @@ cryptography = "^44.0.1"
 gunicorn = "^23.0.0"
 
 [tool.poetry.group.dev.dependencies]
-requests = "^2.32.0"
+requests = "^2.32.4"
 pytest = "^8.0.1"
 pytest-dotenv = "^0.5.2"
 pytest-cov = "^6.0.0"
