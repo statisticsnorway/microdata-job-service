@@ -1,6 +1,6 @@
 from flask import url_for
 
-from job_service.adapter import job_db, target_db
+from job_service.adapter.db import CLIENT
 from job_service.model.job import Job, UserInfo
 from job_service.model.target import Target
 
@@ -48,7 +48,7 @@ JOB_LIST = [
 
 def test_get_targets(flask_app, mocker):
     get_jobs = mocker.patch.object(
-        target_db, "get_targets", return_value=TARGET_LIST
+        CLIENT, "get_targets", return_value=TARGET_LIST
     )
     response = flask_app.get(url_for("targets_api.get_targets"))
     assert response.json == [
@@ -60,7 +60,7 @@ def test_get_targets(flask_app, mocker):
 
 
 def test_get_targets_none_found(flask_app, mocker):
-    get_jobs = mocker.patch.object(target_db, "get_targets", return_value=[])
+    get_jobs = mocker.patch.object(CLIENT, "get_targets", return_value=[])
     response = flask_app.get(url_for("targets_api.get_targets"))
     assert response.json == []
     assert response.status_code == 200
@@ -69,7 +69,7 @@ def test_get_targets_none_found(flask_app, mocker):
 
 def test_get_target(flask_app, mocker):
     get_jobs_for_target = mocker.patch.object(
-        job_db, "get_jobs_for_target", return_value=JOB_LIST
+        CLIENT, "get_jobs_for_target", return_value=JOB_LIST
     )
     response = flask_app.get(
         url_for("targets_api.get_target_jobs", name="MY_DATASET")
@@ -84,7 +84,7 @@ def test_get_target(flask_app, mocker):
 
 def test_get_target_none_found(flask_app, mocker):
     get_job = mocker.patch.object(
-        job_db, "get_jobs_for_target", return_value=[]
+        CLIENT, "get_jobs_for_target", return_value=[]
     )
     response = flask_app.get(
         url_for("targets_api.get_target_jobs", name="MY_DATASET")

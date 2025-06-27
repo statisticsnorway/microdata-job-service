@@ -3,7 +3,7 @@ from pytest_mock import MockFixture
 from testcontainers.mongodb import MongoDbContainer
 
 from job_service.model.request import MaintenanceStatusRequest
-from job_service.adapter import maintenance_db
+from job_service.adapter.db import CLIENT
 
 mongo = MongoDbContainer("mongo:5.0")
 mongo.start()
@@ -19,10 +19,8 @@ def setup_function():
 
 
 def test_initialize_after_get_latest_status(mocker: MockFixture):
-    mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
-    )
-    latest_status = maintenance_db.get_latest_status()
+    mocker.patch.object(CLIENT, "maintenance", DB_CLIENT.jobdb.maintenance)
+    latest_status = CLIENT.get_latest_maintenance_status()
 
     assert (
         latest_status["msg"]
@@ -33,10 +31,8 @@ def test_initialize_after_get_latest_status(mocker: MockFixture):
 
 
 def test_initialize_after_get_history(mocker: MockFixture):
-    mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
-    )
-    statuses = maintenance_db.get_history()
+    mocker.patch.object(CLIENT, "maintenance", DB_CLIENT.jobdb.maintenance)
+    statuses = CLIENT.get_maintenance_history()
 
     assert (
         statuses[0]["msg"]
@@ -47,11 +43,9 @@ def test_initialize_after_get_history(mocker: MockFixture):
 
 
 def test_set_status(mocker: MockFixture):
-    mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
-    )
+    mocker.patch.object(CLIENT, "maintenance", DB_CLIENT.jobdb.maintenance)
 
-    status = maintenance_db.set_status(
+    status = CLIENT.set_maintenance_status(
         MaintenanceStatusRequest(msg="we upgrade chill", paused=True)
     )
     assert status["msg"] == "we upgrade chill"
@@ -61,24 +55,22 @@ def test_set_status(mocker: MockFixture):
 
 
 def test_set_and_get_status(mocker: MockFixture):
-    mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
-    )
+    mocker.patch.object(CLIENT, "maintenance", DB_CLIENT.jobdb.maintenance)
 
-    maintenance_db.set_status(
+    CLIENT.set_maintenance_status(
         MaintenanceStatusRequest(msg="we upgrade chill", paused=True)
     )
     assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 1
-    maintenance_db.set_status(
+    CLIENT.set_maintenance_status(
         MaintenanceStatusRequest(msg="finished upgrading", paused=False)
     )
     assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 2
-    maintenance_db.set_status(
+    CLIENT.set_maintenance_status(
         MaintenanceStatusRequest(msg="we need to upgrade again", paused=True)
     )
     assert DB_CLIENT.jobdb.maintenance.count_documents({}) == 3
 
-    latest_status = maintenance_db.get_latest_status()
+    latest_status = CLIENT.get_latest_maintenance_status()
 
     assert latest_status["msg"] == "we need to upgrade again"
     assert latest_status["paused"]
@@ -86,21 +78,19 @@ def test_set_and_get_status(mocker: MockFixture):
 
 
 def test_get_history(mocker: MockFixture):
-    mocker.patch.object(
-        maintenance_db, "maintenance", DB_CLIENT.jobdb.maintenance
-    )
+    mocker.patch.object(CLIENT, "maintenance", DB_CLIENT.jobdb.maintenance)
 
-    maintenance_db.set_status(
+    CLIENT.set_maintenance_status(
         MaintenanceStatusRequest(msg="first", paused=True)
     )
-    maintenance_db.set_status(
+    CLIENT.set_maintenance_status(
         MaintenanceStatusRequest(msg="second", paused=False)
     )
-    maintenance_db.set_status(
+    CLIENT.set_maintenance_status(
         MaintenanceStatusRequest(msg="last", paused=True)
     )
 
-    documents = maintenance_db.get_history()
+    documents = CLIENT.get_maintenance_history()
 
     assert documents[0]["msg"] == "last"
     assert documents[1]["msg"] == "second"
