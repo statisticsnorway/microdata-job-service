@@ -1,7 +1,7 @@
 from flask import url_for
 from pytest_mock import MockFixture
 
-from job_service.adapter import job_db, target_db
+from job_service.adapter.db import CLIENT
 from job_service.api import auth
 from job_service.config import environment
 from job_service.exceptions import NotFoundException
@@ -71,7 +71,7 @@ UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
 
 
 def test_get_jobs(flask_app, mocker: MockFixture):
-    get_jobs = mocker.patch.object(job_db, "get_jobs", return_value=JOB_LIST)
+    get_jobs = mocker.patch.object(CLIENT, "get_jobs", return_value=JOB_LIST)
     response = flask_app.get(
         url_for(
             "job_api.get_jobs",
@@ -87,7 +87,7 @@ def test_get_jobs(flask_app, mocker: MockFixture):
 
 
 def test_get_job(flask_app, mocker: MockFixture):
-    get_job = mocker.patch.object(job_db, "get_job", return_value=JOB_LIST[0])
+    get_job = mocker.patch.object(CLIENT, "get_job", return_value=JOB_LIST[0])
     response = flask_app.get(url_for("job_api.get_job", job_id=JOB_ID))
     get_job.assert_called_once()
     get_job.assert_called_with(JOB_ID)
@@ -99,7 +99,7 @@ def test_get_job(flask_app, mocker: MockFixture):
 
 def test_get_job_not_found(flask_app, mocker: MockFixture):
     get_job = mocker.patch.object(
-        job_db, "get_job", side_effect=NotFoundException(NOT_FOUND_MESSAGE)
+        CLIENT, "get_job", side_effect=NotFoundException(NOT_FOUND_MESSAGE)
     )
     response = flask_app.get(url_for("job_api.get_job", job_id=JOB_ID))
     get_job.assert_called_once()
@@ -112,8 +112,8 @@ def test_new_job(flask_app, mocker: MockFixture):
     mocker.patch.object(
         auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
     )
-    new_job = mocker.patch.object(job_db, "new_job", return_value=JOB_LIST[0])
-    update_target = mocker.patch.object(target_db, "update_target")
+    new_job = mocker.patch.object(CLIENT, "new_job", return_value=JOB_LIST[0])
+    update_target = mocker.patch.object(CLIENT, "update_target")
     response = flask_app.post(url_for("job_api.new_job"), json=NEW_JOB_REQUEST)
     assert new_job.call_count == 2
     new_job.assert_any_call(
@@ -132,9 +132,9 @@ def test_new_job(flask_app, mocker: MockFixture):
 
 def test_update_job(flask_app, mocker: MockFixture):
     update_job = mocker.patch.object(
-        job_db, "update_job", return_value=JOB_LIST[0]
+        CLIENT, "update_job", return_value=JOB_LIST[0]
     )
-    update_target = mocker.patch.object(target_db, "update_target")
+    update_target = mocker.patch.object(CLIENT, "update_target")
     response = flask_app.put(
         url_for("job_api.update_job", job_id=JOB_ID), json=UPDATE_JOB_REQUEST
     )
@@ -148,7 +148,7 @@ def test_update_job(flask_app, mocker: MockFixture):
 
 
 def test_update_job_bad_request(flask_app, mocker: MockFixture):
-    update_target = mocker.patch.object(target_db, "update_target")
+    update_target = mocker.patch.object(CLIENT, "update_target")
     response = flask_app.put(
         url_for("job_api.update_job", job_id=JOB_ID),
         json={"status": "no-such-status"},

@@ -5,7 +5,7 @@ import pytest
 from pytest_mock import MockFixture
 from testcontainers.mongodb import MongoDbContainer
 
-from job_service.adapter import job_db
+from job_service.adapter.db import CLIENT
 from job_service.exceptions import JobExistsException, NotFoundException
 from job_service.model.job import Job, UserInfo
 from job_service.model.request import (
@@ -35,7 +35,7 @@ JOB = {
 
 mongo = MongoDbContainer("mongo:5.0")
 mongo.start()
-DB_CLIENT = mongo.get_connection_client()
+TEST_DB_CLIENT = mongo.get_connection_client()
 
 
 def teardown_module():
@@ -43,53 +43,61 @@ def teardown_module():
 
 
 def setup_function():
-    DB_CLIENT.jobdb.drop_collection("in_progress")
-    DB_CLIENT.jobdb.drop_collection("completed")
-    DB_CLIENT.jobdb.inprogress.create_index("parameters.target", unique=True)
+    TEST_DB_CLIENT.jobdb.drop_collection("in_progress")
+    TEST_DB_CLIENT.jobdb.drop_collection("completed")
+    TEST_DB_CLIENT.jobdb.inprogress.create_index(
+        "parameters.target", unique=True
+    )
 
 
 def test_get_job(mocker: MockFixture):
-    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    TEST_DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 0
 
-    mocker.patch.object(job_db, "in_progress", DB_CLIENT.jobdb.in_progress)
-    mocker.patch.object(job_db, "completed", DB_CLIENT.jobdb.completed)
-    assert job_db.get_job(JOB_ID) == Job(**JOB)
+    mocker.patch.object(
+        CLIENT, "in_progress", TEST_DB_CLIENT.jobdb.in_progress
+    )
+    mocker.patch.object(CLIENT, "completed", TEST_DB_CLIENT.jobdb.completed)
+    assert CLIENT.get_job(JOB_ID) == Job(**JOB)
 
     with pytest.raises(NotFoundException) as e:
-        job_db.get_job(NON_EXISTING_JOB_ID)
+        CLIENT.get_job(NON_EXISTING_JOB_ID)
     assert "No job found for jobId:" in str(e)
 
 
 def test_get_jobs(mocker: MockFixture):
-    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
-    mocker.patch.object(job_db, "in_progress", DB_CLIENT.jobdb.in_progress)
-    mocker.patch.object(job_db, "completed", DB_CLIENT.jobdb.completed)
+    TEST_DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    mocker.patch.object(
+        CLIENT, "in_progress", TEST_DB_CLIENT.jobdb.in_progress
+    )
+    mocker.patch.object(CLIENT, "completed", TEST_DB_CLIENT.jobdb.completed)
     get_job_request = GetJobRequest(status="queued")
-    assert job_db.get_jobs(get_job_request) == [Job(**JOB)]
+    assert CLIENT.get_jobs(get_job_request) == [Job(**JOB)]
 
 
 def test_new_job(mocker: MockFixture):
-    mocker.patch.object(job_db, "in_progress", DB_CLIENT.jobdb.in_progress)
-    mocker.patch.object(job_db, "completed", DB_CLIENT.jobdb.completed)
+    mocker.patch.object(
+        CLIENT, "in_progress", TEST_DB_CLIENT.jobdb.in_progress
+    )
+    mocker.patch.object(CLIENT, "completed", TEST_DB_CLIENT.jobdb.completed)
     assert (
-        job_db.new_job(
+        CLIENT.new_job(
             NewJobRequest(operation="ADD", target="NEW_DATASET"), USER_INFO
         )
         is not None
     )
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
-    actual = job_db.get_jobs(GetJobRequest())[0]
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    actual = CLIENT.get_jobs(GetJobRequest())[0]
     assert actual.created_by.model_dump() == USER_INFO.model_dump()
     assert actual.parameters.target == "NEW_DATASET"
     assert actual.parameters.operation == "ADD"
     with pytest.raises(JobExistsException) as e:
         assert (
-            job_db.new_job(
+            CLIENT.new_job(
                 NewJobRequest(operation="ADD", target="NEW_DATASET"), USER_INFO
             )
             is not None
@@ -98,25 +106,27 @@ def test_new_job(mocker: MockFixture):
 
 
 def test_update_job(mocker: MockFixture):
-    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    TEST_DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 0
 
-    mocker.patch.object(job_db, "in_progress", DB_CLIENT.jobdb.in_progress)
-    mocker.patch.object(job_db, "completed", DB_CLIENT.jobdb.completed)
-    job_db.update_job("123-123-123-123", UpdateJobRequest(status="validating"))
-    actual = job_db.get_job(JOB_ID)
+    mocker.patch.object(
+        CLIENT, "in_progress", TEST_DB_CLIENT.jobdb.in_progress
+    )
+    mocker.patch.object(CLIENT, "completed", TEST_DB_CLIENT.jobdb.completed)
+    CLIENT.update_job("123-123-123-123", UpdateJobRequest(status="validating"))
+    actual = CLIENT.get_job(JOB_ID)
     assert actual.status == "validating"
 
-    job_db.update_job(
+    CLIENT.update_job(
         "123-123-123-123",
         UpdateJobRequest(status="validating", log="update log"),
     )
-    actual = job_db.get_job(JOB_ID)
+    actual = CLIENT.get_job(JOB_ID)
     assert actual.status == "validating"
     assert actual.log[len(actual.log) - 1].message == "update log"
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 0
 
 
 def test_new_job_different_created_at():
@@ -132,29 +142,33 @@ def test_new_job_different_created_at():
 
 
 def test_update_job_completed(mocker: MockFixture):
-    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
-    mocker.patch.object(job_db, "in_progress", DB_CLIENT.jobdb.in_progress)
-    mocker.patch.object(job_db, "completed", DB_CLIENT.jobdb.completed)
+    TEST_DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    mocker.patch.object(
+        CLIENT, "in_progress", TEST_DB_CLIENT.jobdb.in_progress
+    )
+    mocker.patch.object(CLIENT, "completed", TEST_DB_CLIENT.jobdb.completed)
 
-    job_db.update_job(
+    CLIENT.update_job(
         "123-123-123-123",
         UpdateJobRequest(status="completed", log="my new log"),
     )
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 0
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 0
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 1
 
 
 def test_update_job_failed(mocker: MockFixture):
-    DB_CLIENT.jobdb.in_progress.insert_one(JOB)
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 0
-    mocker.patch.object(job_db, "in_progress", DB_CLIENT.jobdb.in_progress)
-    mocker.patch.object(job_db, "completed", DB_CLIENT.jobdb.completed)
+    TEST_DB_CLIENT.jobdb.in_progress.insert_one(JOB)
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 0
+    mocker.patch.object(
+        CLIENT, "in_progress", TEST_DB_CLIENT.jobdb.in_progress
+    )
+    mocker.patch.object(CLIENT, "completed", TEST_DB_CLIENT.jobdb.completed)
 
-    job_db.update_job(
+    CLIENT.update_job(
         "123-123-123-123", UpdateJobRequest(status="failed", log="my new log")
     )
-    assert DB_CLIENT.jobdb.in_progress.count_documents({}) == 0
-    assert DB_CLIENT.jobdb.completed.count_documents({}) == 1
+    assert TEST_DB_CLIENT.jobdb.in_progress.count_documents({}) == 0
+    assert TEST_DB_CLIENT.jobdb.completed.count_documents({}) == 1

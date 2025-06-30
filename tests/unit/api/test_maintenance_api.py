@@ -1,7 +1,7 @@
 from flask import url_for
 from pytest_mock import MockFixture
 
-from job_service.adapter import maintenance_db
+from job_service.adapter.db import CLIENT
 
 MAINTENANCE_STATUS_REQUEST_VALID = {"msg": "we upgrade chill", "paused": True}
 MAINTENANCE_STATUS_REQUEST_NO_MSG = {"paused": True}
@@ -37,7 +37,7 @@ RESPONSE_FROM_DB = [
 
 def test_set_maintenance_status(flask_app, mocker: MockFixture):
     db_set_status = mocker.patch.object(
-        maintenance_db, "set_status", return_value=NEW_STATUS
+        CLIENT, "set_maintenance_status", return_value=NEW_STATUS
     )
     response = flask_app.post(
         url_for("maintenance_api.set_status"),
@@ -50,7 +50,7 @@ def test_set_maintenance_status(flask_app, mocker: MockFixture):
 
 
 def test_set_maintenance_status_with_no_msg(flask_app, mocker: MockFixture):
-    db_set_status = mocker.patch.object(maintenance_db, "set_status")
+    db_set_status = mocker.patch.object(CLIENT, "set_maintenance_status")
     response = flask_app.post(
         url_for("maintenance_api.set_status"),
         json=MAINTENANCE_STATUS_REQUEST_NO_MSG,
@@ -67,7 +67,7 @@ def test_set_maintenance_status_with_no_msg(flask_app, mocker: MockFixture):
 def test_set_maintenance_status_with_invalid_paused(
     flask_app, mocker: MockFixture
 ):
-    db_set_status = mocker.patch.object(maintenance_db, "set_status")
+    db_set_status = mocker.patch.object(CLIENT, "set_maintenance_status")
     response = flask_app.post(
         url_for("maintenance_api.set_status"),
         json=MAINTENANCE_STATUS_REQUEST_INVALID_PAUSE_VALUE,
@@ -83,7 +83,9 @@ def test_set_maintenance_status_with_invalid_paused(
 
 def test_get_maintenance_status(flask_app, mocker: MockFixture, caplog):
     get_status = mocker.patch.object(
-        maintenance_db, "get_latest_status", return_value=RESPONSE_FROM_DB[0]
+        CLIENT,
+        "get_latest_maintenance_status",
+        return_value=RESPONSE_FROM_DB[0],
     )
 
     response = flask_app.get(url_for("maintenance_api.get_status"))
@@ -101,7 +103,7 @@ def test_get_maintenance_status_from_empty_collection(
     flask_app, mocker: MockFixture
 ):
     get_status = mocker.patch.object(
-        maintenance_db, "get_latest_status", return_value={}
+        CLIENT, "get_latest_maintenance_status", return_value={}
     )
 
     response = flask_app.get(url_for("maintenance_api.get_status"))
@@ -113,7 +115,7 @@ def test_get_maintenance_status_from_empty_collection(
 
 def test_get_maintenance_history(flask_app, mocker: MockFixture):
     get_history = mocker.patch.object(
-        maintenance_db, "get_history", return_value=RESPONSE_FROM_DB
+        CLIENT, "get_maintenance_history", return_value=RESPONSE_FROM_DB
     )
     response = flask_app.get(url_for("maintenance_api.get_history"))
     get_history.assert_called_once()
@@ -126,7 +128,7 @@ def test_get_maintenance_history_from_empty_collection(
     flask_app, mocker: MockFixture
 ):
     get_history = mocker.patch.object(
-        maintenance_db, "get_history", return_value=[]
+        CLIENT, "get_maintenance_history", return_value=[]
     )
     response = flask_app.get(url_for("maintenance_api.get_history"))
     get_history.assert_called_once()

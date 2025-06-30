@@ -2,7 +2,7 @@
 from pytest_mock import MockFixture
 from testcontainers.mongodb import MongoDbContainer
 
-from job_service.adapter import target_db
+from job_service.adapter.db import CLIENT
 from job_service.model.target import Target
 from job_service.model.job import (
     DataStructureUpdate,
@@ -115,10 +115,8 @@ def test_get_targets(mocker: MockFixture):
     )
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
 
-    mocker.patch.object(
-        target_db, "targets_collection", DB_CLIENT.jobdb.targets
-    )
-    assert target_db.get_targets() == [TARGET_LIST[0]]
+    mocker.patch.object(CLIENT, "targets", DB_CLIENT.jobdb.targets)
+    assert CLIENT.get_targets() == [TARGET_LIST[0]]
 
 
 def test_update_target(mocker: MockFixture):
@@ -127,18 +125,16 @@ def test_update_target(mocker: MockFixture):
     )
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
 
-    mocker.patch.object(
-        target_db, "targets_collection", DB_CLIENT.jobdb.targets
-    )
-    target_db.update_target(TARGET_UPDATE_JOB)
+    mocker.patch.object(CLIENT, "targets", DB_CLIENT.jobdb.targets)
+    CLIENT.update_target(TARGET_UPDATE_JOB)
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 1
-    updated_target = target_db.get_targets()[0]
+    updated_target = CLIENT.get_targets()[0]
     assert updated_target.action == ["ADD"]
     assert updated_target.status == "queued"
 
-    target_db.update_target(NEW_TARGET_JOB)
+    CLIENT.update_target(NEW_TARGET_JOB)
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 2
-    targets = target_db.get_targets()
+    targets = CLIENT.get_targets()
     updated_target = next(
         (target for target in targets if target.name == "NEW_DATASET"), None
     )
@@ -154,13 +150,11 @@ def test_update_targets_bump(mocker: MockFixture):
     )
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 2
 
-    mocker.patch.object(
-        target_db, "targets_collection", DB_CLIENT.jobdb.targets
-    )
+    mocker.patch.object(CLIENT, "targets", DB_CLIENT.jobdb.targets)
 
-    target_db.update_bump_targets(BUMP_JOB)
+    CLIENT.update_bump_targets(BUMP_JOB)
     assert DB_CLIENT.jobdb.targets.count_documents({}) == 4
-    targets = target_db.get_targets()
+    targets = CLIENT.get_targets()
     assert len(targets) == 4
     my_dataset_target = next(
         target for target in targets if target.name == "MY_DATASET"

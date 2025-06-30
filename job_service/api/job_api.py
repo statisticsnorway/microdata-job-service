@@ -1,7 +1,7 @@
 import logging
 
 from flask import Blueprint, jsonify, request
-from job_service.adapter import job_db, target_db
+from job_service.adapter.db import CLIENT
 from job_service.api import auth
 from job_service.config import environment
 from job_service.exceptions import BumpingDisabledException
@@ -27,7 +27,7 @@ def get_jobs():
         ignoreCompleted=request.args.get("ignoreCompleted"),
     )
     logger.debug(f"GET /jobs with query: {validated_query}")
-    jobs = job_db.get_jobs(validated_query)
+    jobs = CLIENT.get_jobs(validated_query)
     return jsonify(
         [job.model_dump(exclude_none=True, by_alias=True) for job in jobs]
     )
@@ -52,7 +52,7 @@ def new_job():
                     "Bumping the datastore is disabled"
                 )
             else:
-                job = job_db.new_job(job_request, user_info)
+                job = CLIENT.new_job(job_request, user_info)
                 response_list.append(
                     {
                         "status": "queued",
@@ -60,7 +60,7 @@ def new_job():
                         "job_id": job.job_id,
                     }
                 )
-            target_db.update_target(job)
+            CLIENT.update_target(job)
         except BumpingDisabledException as e:
             logger.exception(e)
             response_list.append(
@@ -78,7 +78,7 @@ def new_job():
 @job_api.get("/jobs/<job_id>")
 def get_job(job_id: str):
     logger.info(f"GET /jobs/{job_id}")
-    job = job_db.get_job(job_id)
+    job = CLIENT.get_job(job_id)
     return job.model_dump(exclude_none=True, by_alias=True)
 
 
@@ -89,8 +89,8 @@ def update_job(job_id: str):
         f"PUT /jobs/{job_id} with request body: "
         f"{validated_body.model_dump(exclude_none=True, by_alias=True)}"
     )
-    job = job_db.update_job(job_id, validated_body)
-    target_db.update_target(job)
+    job = CLIENT.update_job(job_id, validated_body)
+    CLIENT.update_target(job)
     if job.parameters.target == "DATASTORE" and job.status == "completed":
-        target_db.update_bump_targets(job)
+        CLIENT.update_bump_targets(job)
     return {"message": f"Updated job with jobId {job_id}"}
