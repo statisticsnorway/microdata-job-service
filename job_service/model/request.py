@@ -138,3 +138,20 @@ class GetJobRequest(CamelModel, extra="forbid", use_enum_values=True):
             raise BadQueryException(
                 "Unable to transform GetJobRequest to Mongo query"
             )
+
+    def to_sqlite_where_condition(self):
+        where_conditions = []
+        if self.status is not None:
+            where_conditions.append(f"status = '{self.status}'")
+        if self.ignoreCompleted:
+            where_conditions.append("status NOT IN ('completed', 'failed')")
+        if self.operation is not None:
+            in_clause = ",".join([f"'{str(op)}'" for op in self.operation])
+            where_conditions.append(
+                f"json_extract(parameters, '$.operation')  IN ({in_clause})"
+            )
+        if where_conditions:
+            print(where_conditions)
+            return "WHERE " + " AND ".join(where_conditions)
+        else:
+            return ""
