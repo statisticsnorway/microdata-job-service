@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import datetime
 from pathlib import Path
 import logging
 import json
@@ -10,7 +10,6 @@ from job_service.exceptions import (
     JobExistsException,
     NotFoundException,
 )
-from job_service.model.enums import JobStatus
 from job_service.model.job import Job, UserInfo, Log
 from job_service.model.target import Target
 from job_service.model.request import (
