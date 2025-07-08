@@ -603,7 +603,7 @@ class SqliteDbClient:
                     job.status,
                     datetime.now(),
                     created_by,
-                    ",".join(job.get_action()),
+                    ",".join([operation, str(version)]),
                 )
             conn.commit()
         except Exception as e:
