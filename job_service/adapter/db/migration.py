@@ -13,7 +13,6 @@ class MigrationConfig(BaseModel):
     datastore_name: str
     datastore_rdn: str
     datastore_description: str
-    sqlite_file_path: str
     datastore_directory: str
     migration_api_key: str
 
@@ -25,7 +24,7 @@ def _get_migration_config() -> MigrationConfig:
 
 
 def _insert_datastore_defintion(config: MigrationConfig):
-    conn = _conn(config.sqlite_file_path)
+    conn = _conn(environment.get("SQLITE_URL"))
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -43,7 +42,7 @@ def _insert_datastore_defintion(config: MigrationConfig):
 
 
 def _transfer_jobs(mongo_client: MongoDbClient, config: MigrationConfig):
-    conn = _conn(config.sqlite_file_path)
+    conn = _conn(environment.get("SQLITE_URL"))
     jobs: list[Job] = mongo_client.get_jobs(GetJobRequest())
     cursor = conn.cursor()
     for job in jobs:
@@ -82,7 +81,7 @@ def _transfer_jobs(mongo_client: MongoDbClient, config: MigrationConfig):
 def _transfer_maintenance_history(
     mongo_client: MongoDbClient, config: MigrationConfig
 ):
-    conn = _conn(config.sqlite_file_path)
+    conn = _conn(environment.get("SQLITE_URL"))
     maintenance_logs = mongo_client.get_maintenance_history()
     cursor = conn.cursor()
     for maintenance_log in maintenance_logs:
@@ -102,7 +101,7 @@ def _transfer_maintenance_history(
 
 
 def _transfer_targets(mongo_client: MongoDbClient, config: MigrationConfig):
-    conn = _conn(config.sqlite_file_path)
+    conn = _conn(environment.get("SQLITE_URL"))
     targets = mongo_client.get_targets()
     cursor = conn.cursor()
     for target in targets:
@@ -198,8 +197,8 @@ def start_migration():
     print("Reading migration config...")
     config = _get_migration_config()
     print(f"Migration config loaded: {config}")
-    print(f"Ensuring table schema @ {config.sqlite_file_path}")
-    _ensure_schema(config.sqlite_file_path)
+    print(f"Ensuring table schema @ {environment.get('SQLITE_URL')}")
+    _ensure_schema(environment.get("SQLITE_URL"))
     print("Inserting datastore definiton...")
     _insert_datastore_defintion(config)
     print("Inserting jobs...")
@@ -209,5 +208,5 @@ def start_migration():
     print("Inserting targets...")
     _transfer_targets(mongo_client, config)
     print(
-        f"Finished transfering mongodb collections to sqlite file @ {config.sqlite_file_path}"
+        f"Finished transfering mongodb collections to sqlite file @ {environment.get('SQLITE_URL')}"
     )
