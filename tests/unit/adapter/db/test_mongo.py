@@ -184,11 +184,8 @@ def test_new_job(mocker: MockFixture):
     assert actual.parameters.target == "NEW_DATASET"
     assert actual.parameters.operation == "ADD"
     with pytest.raises(JobExistsException) as e:
-        assert (
-            CLIENT.new_job(
-                NewJobRequest(operation="ADD", target="NEW_DATASET"), USER_INFO
-            )
-            is not None
+        CLIENT.new_job(
+            NewJobRequest(operation="ADD", target="NEW_DATASET"), USER_INFO
         )
     assert "NEW_DATASET already in progress" in str(e)
 

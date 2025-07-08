@@ -403,7 +403,8 @@ def test_update_targets_bump():
     assert "FRESH_DATASET2" in target_names
     assert all(
         [
-            target.action == ["BUMP", "1.0.0", "2.0.0"]
+            target.action == ["RELEASED", "2.0.0"]
+            or target.action == ["REMOVED", "2.0.0"]
             for target in targets
             if target.name != "OTHER_DATASET"
         ]
