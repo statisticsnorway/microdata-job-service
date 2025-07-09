@@ -145,7 +145,7 @@ class SqliteDbClient:
                 raise NotFoundException(f"No job found for jobId: {job_id}")
 
             return Job(
-                job_id=job_row["job_id"],
+                job_id=str(job_row["job_id"]),
                 status=job_row["status"],
                 parameters=json.loads(job_row["parameters"]),
                 created_at=job_row["created_at"].isoformat(),
@@ -189,7 +189,7 @@ class SqliteDbClient:
                 return []
             return [
                 Job(
-                    job_id=job_row["job_id"],
+                    job_id=str(job_row["job_id"]),
                     status=job_row["status"],
                     parameters=json.loads(job_row["parameters"]),
                     created_at=job_row["created_at"].isoformat(),
@@ -238,7 +238,7 @@ class SqliteDbClient:
                 return []
             return [
                 Job(
-                    job_id=job_row["job_id"],
+                    job_id=str(job_row["job_id"]),
                     status=job_row["status"],
                     parameters=json.loads(job_row["parameters"]),
                     created_at=job_row["created_at"].isoformat(),
@@ -325,8 +325,8 @@ class SqliteDbClient:
                 )
             if body.description is not None:
                 cursor.execute(
-                    "UPDATE job SET parameters = json_set(parameters, $.description, ?) WHERE job_id = ?",
-                    (body.description, job_id),
+                    "UPDATE job SET parameters = json_set(parameters, '$.description', ?) WHERE job_id = ?",
+                    (body.description, int(job_id)),
                 )
 
             if body.status is not None:
@@ -350,7 +350,7 @@ class SqliteDbClient:
                     f"Could not find job with id {job_id} after update"
                 )
             return Job(
-                job_id=job_row["job_id"],
+                job_id=str(job_row["job_id"]),
                 status=job_row["status"],
                 parameters=json.loads(job_row["parameters"]),
                 created_at=job_row["created_at"].isoformat(),

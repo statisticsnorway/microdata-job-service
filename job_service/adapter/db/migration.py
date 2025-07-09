@@ -56,7 +56,7 @@ def _transfer_jobs(mongo_client: MongoDbClient):
                 1,
                 job.status,
                 job.created_at,
-                job.created_by,
+                json.dumps(job.created_by.model_dump(by_alias=True)),
                 json.dumps(job.parameters.model_dump(by_alias=True)),
             ),
         )
