@@ -85,7 +85,7 @@ def _transfer_maintenance_history(mongo_client: MongoDbClient):
     for maintenance_log in maintenance_logs:
         cursor.execute(
             """
-            INSERT INTO maintenance (datastore, msg, paused, timestamp)
+            INSERT INTO maintenance (datastore_id, msg, paused, timestamp)
             VALUES (?, ?, ?, ?)
             """,
             (
@@ -105,7 +105,7 @@ def _transfer_targets(mongo_client: MongoDbClient):
     for target in targets:
         cursor.execute(
             """
-            INSERT INTO target (name, datastore, status, action, last_updated_at, last_updated_by)
+            INSERT INTO target (name, datastore_id, status, action, last_updated_at, last_updated_by)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
