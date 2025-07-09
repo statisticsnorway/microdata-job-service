@@ -62,21 +62,23 @@ class SqliteDbClient:
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS maintenance (
                     maintenance_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    datastore TEXT,
+                    datastore_id INTEGER,
                     msg TEXT,
                     paused BOOLEAN,
-                    timestamp TIMESTAMP
+                    timestamp TIMESTAMP,
+                    FOREIGN KEY(datastore_id) REFERENCES datastore(datastore_id)
                 )
             """)
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS target (
                     name TEXT,
-                    datastore TEXT,
+                    datastore_id INTEGER,
                     status TEXT,
                     action TEXT,
                     last_updated_at TIMESTAMP,
                     last_updated_by TEXT,
-                    PRIMARY KEY (name, datastore)
+                    PRIMARY KEY (name, datastore_id)
+                    FOREIGN KEY(datastore_id) REFERENCES datastore(datastore_id)
                 )
             """)
             cursor.execute("""
@@ -381,7 +383,7 @@ class SqliteDbClient:
                 timestamp = datetime.now().isoformat()
                 cursor.execute(
                     """
-                    INSERT INTO maintenance (datastore, msg, paused, timestamp)
+                    INSERT INTO maintenance (datastore_id, msg, paused, timestamp)
                     VALUES (?, ?, ?, ?)
                     """,
                     (
@@ -396,7 +398,7 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT msg, paused, timestamp FROM maintenance
-                WHERE datastore = ?
+                WHERE datastore_id = ?
                 ORDER BY timestamp DESC
                 LIMIT 1
                 """,
@@ -425,7 +427,7 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT msg, paused, timestamp FROM maintenance
-                WHERE datastore = ?
+                WHERE datastore_id = ?
                 ORDER BY timestamp DESC
                 LIMIT 1
                 """,
@@ -453,7 +455,7 @@ class SqliteDbClient:
             cursor.execute(
                 """
                 SELECT msg, paused, timestamp FROM maintenance
-                WHERE datastore = ?
+                WHERE datastore_id = ?
                 ORDER BY timestamp DESC
                 """,
                 (1,),
@@ -486,7 +488,7 @@ class SqliteDbClient:
             timestamp = datetime.now().isoformat()
             cursor.execute(
                 """
-                INSERT INTO maintenance (datastore, msg, paused, timestamp)
+                INSERT INTO maintenance (datastore_id, msg, paused, timestamp)
                 VALUES (?, ?, ?, ?)
                 """,
                 (
@@ -510,9 +512,9 @@ class SqliteDbClient:
             cursor = conn.cursor()
             target_rows = cursor.execute(
                 """
-                SELECT name, datastore, status, action, last_updated_at, last_updated_by
+                SELECT name, datastore_id, status, action, last_updated_at, last_updated_by
                 FROM target
-                WHERE datastore = ?
+                WHERE datastore_id = ?
                 """,
                 (1,),
             ).fetchall()
@@ -542,9 +544,9 @@ class SqliteDbClient:
     ):
         cursor.execute(
             """
-                INSERT INTO target (name, datastore, status, last_updated_at, last_updated_by, action)
+                INSERT INTO target (name, datastore_id, status, last_updated_at, last_updated_by, action)
                 VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(name, datastore) DO UPDATE SET
+                ON CONFLICT(name, datastore_id) DO UPDATE SET
                     status = excluded.status,
                     last_updated_at = excluded.last_updated_at,
                     last_updated_by = excluded.last_updated_by,

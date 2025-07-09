@@ -194,7 +194,7 @@ def setup_function():
     for target in TARGET_LIST:
         cursor.execute(
             """
-            INSERT INTO target (name, datastore, last_updated_at, status, action, last_updated_by)
+            INSERT INTO target (name, datastore_id, last_updated_at, status, action, last_updated_by)
             VALUES (?,  ?, ?, ?, ?, ?)
             """,
             (

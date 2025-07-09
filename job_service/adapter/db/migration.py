@@ -41,7 +41,7 @@ def _insert_datastore_defintion(config: MigrationConfig):
     conn.commit()
 
 
-def _transfer_jobs(mongo_client: MongoDbClient, config: MigrationConfig):
+def _transfer_jobs(mongo_client: MongoDbClient):
     conn = _conn(environment.get("SQLITE_URL"))
     jobs: list[Job] = mongo_client.get_jobs(GetJobRequest())
     cursor = conn.cursor()
@@ -78,9 +78,7 @@ def _transfer_jobs(mongo_client: MongoDbClient, config: MigrationConfig):
     conn.commit()
 
 
-def _transfer_maintenance_history(
-    mongo_client: MongoDbClient, config: MigrationConfig
-):
+def _transfer_maintenance_history(mongo_client: MongoDbClient):
     conn = _conn(environment.get("SQLITE_URL"))
     maintenance_logs = mongo_client.get_maintenance_history()
     cursor = conn.cursor()
@@ -100,7 +98,7 @@ def _transfer_maintenance_history(
     conn.commit()
 
 
-def _transfer_targets(mongo_client: MongoDbClient, config: MigrationConfig):
+def _transfer_targets(mongo_client: MongoDbClient):
     conn = _conn(environment.get("SQLITE_URL"))
     targets = mongo_client.get_targets()
     cursor = conn.cursor()
@@ -150,21 +148,23 @@ def _ensure_schema(sqlite_file_path: str):
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS maintenance (
                 maintenance_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                datastore TEXT,
+                datastore_id INTEGER,
                 msg TEXT,
                 paused BOOLEAN,
-                timestamp TIMESTAMP
+                timestamp TIMESTAMP,
+                FOREIGN KEY(datastore_id) REFERENCES datastore(datastore_id)
             )
         """)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS target (
                 name TEXT,
-                datastore TEXT,
+                datastore_id INTEGER,
                 status TEXT,
                 action TEXT,
                 last_updated_at TIMESTAMP,
                 last_updated_by TEXT,
-                PRIMARY KEY (name, datastore)
+                PRIMARY KEY (name, datastore_id)
+                FOREIGN KEY(datastore_id) REFERENCES datastore(datastore_id)
             )
         """)
         cursor.execute("""
@@ -202,11 +202,11 @@ def start_migration():
     print("Inserting datastore definiton...")
     _insert_datastore_defintion(config)
     print("Inserting jobs...")
-    _transfer_jobs(mongo_client, config)
+    _transfer_jobs(mongo_client)
     print("Inserting maintenance history...")
-    _transfer_maintenance_history(mongo_client, config)
+    _transfer_maintenance_history(mongo_client)
     print("Inserting targets...")
-    _transfer_targets(mongo_client, config)
+    _transfer_targets(mongo_client)
     print(
         f"Finished transfering mongodb collections to sqlite file @ {environment.get('SQLITE_URL')}"
     )
