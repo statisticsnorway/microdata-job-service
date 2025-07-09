@@ -29,8 +29,8 @@ class MongoDbClient:
 
     def __init__(self):
         MONGODB_URL = environment.get("MONGODB_URL")
-        MONGODB_USER = secrets.get("MONGODB_USER")
-        MONGODB_PASSWORD = secrets.get("MONGODB_PASSWORD")
+        MONGODB_USER = secrets.get("DB_USER")
+        MONGODB_PASSWORD = secrets.get("DB_PASSWORD")
 
         client = pymongo.MongoClient(
             MONGODB_URL,
@@ -44,7 +44,7 @@ class MongoDbClient:
         self.targets = db.targets
         self.maintenance = db.maintenance
 
-    def get_job(self, job_id: str) -> Job:
+    def get_job(self, job_id: str | int) -> Job:
         """
         Returns job with matching job_id from database.
         Raises NotFoundException if no such job is found.
@@ -166,7 +166,9 @@ class MongoDbClient:
                 self.in_progress.update_one(find_query, log_update_query)
             return Job(**self.in_progress.find_one(find_query))
 
-    def set_maintenance_status(self, status_request: MaintenanceStatusRequest):
+    def set_maintenance_status(
+        self, status_request: MaintenanceStatusRequest
+    ) -> dict:
         document = None
         try:
             document = {
@@ -184,7 +186,7 @@ class MongoDbClient:
             )
             raise e
 
-    def get_latest_maintenance_status(self):
+    def get_latest_maintenance_status(self) -> dict:
         cursor = (
             self.maintenance.find({}, {"_id": 0})
             .sort([("timestamp", -1)])
@@ -204,7 +206,7 @@ class MongoDbClient:
             return [self.initialize_maintenance()]
         return documents
 
-    def initialize_maintenance(self):
+    def initialize_maintenance(self) -> dict:
         logger.info("initializing")
         return self.set_maintenance_status(
             MaintenanceStatusRequest(

@@ -68,7 +68,7 @@ class Log(CamelModel, extra="forbid"):
 
 
 class Job(CamelModel, use_enum_values=True):
-    job_id: str
+    job_id: str | int
     status: JobStatus
     parameters: JobParameters
     log: Optional[List[Log]] = []

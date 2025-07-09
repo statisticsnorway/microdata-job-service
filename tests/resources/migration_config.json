@@ -1,0 +1,8 @@
+{
+    "datastore_name": "Test datastore",
+    "datastore_rdn": "no.ssb.test",
+    "datastore_description": "This is a datastore",
+    "datastore_directory": "/test/resources/datastore",
+    "migration_api_key": "123abc"
+}
+
