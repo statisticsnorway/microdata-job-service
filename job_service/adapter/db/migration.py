@@ -57,7 +57,7 @@ def _transfer_jobs(mongo_client: MongoDbClient):
                 job.status,
                 job.created_at,
                 job.created_by,
-                json.dumps(job.parameters),
+                json.dumps(job.parameters.model_dump(by_alias=True)),
             ),
         )
 
@@ -114,7 +114,7 @@ def _transfer_targets(mongo_client: MongoDbClient):
                 target.status,
                 ",".join(target.action),
                 target.last_updated_at,
-                json.dumps(target.last_updated_by),
+                json.dumps(target.last_updated_by.model_dump(by_alias=True)),
             ),
         )
 
