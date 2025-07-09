@@ -151,7 +151,6 @@ class GetJobRequest(CamelModel, extra="forbid", use_enum_values=True):
                 f"json_extract(parameters, '$.operation')  IN ({in_clause})"
             )
         if where_conditions:
-            print(where_conditions)
             return "WHERE " + " AND ".join(where_conditions)
         else:
             return ""
