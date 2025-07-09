@@ -350,7 +350,7 @@ class SqliteDbClient:
                     f"Could not find job with id {job_id} after update"
                 )
             return Job(
-                job_id=job_row["job_id"],
+                job_id=str(job_row["job_id"]),
                 status=job_row["status"],
                 parameters=json.loads(job_row["parameters"]),
                 created_at=job_row["created_at"].isoformat(),
