@@ -1,8 +1,6 @@
 from typing import Protocol
 
-from job_service.adapter.db.mongo import MongoDbClient
 from job_service.adapter.db.sqlite import SqliteDbClient
-from job_service.adapter.db.migration import _get_migration_config
 from job_service.config import environment
 from job_service.model.job import Job, UserInfo
 from job_service.model.target import Target
@@ -34,18 +32,7 @@ class DatabaseClient(Protocol):
 
 
 def get_database_client() -> DatabaseClient:
-    return MongoDbClient()
+    return SqliteDbClient(environment.get("SQLITE_URL"))
 
 
 CLIENT = get_database_client()
-
-
-def swap_client(x_api_key: str):
-    global CLIENT
-    migration_config = _get_migration_config()
-    if migration_config.migration_api_key != x_api_key:
-        raise Exception("Invalid API key")
-    if isinstance(CLIENT, MongoDbClient):
-        CLIENT = SqliteDbClient(environment.get("SQLITE_URL"))
-    else:
-        CLIENT = MongoDbClient()
