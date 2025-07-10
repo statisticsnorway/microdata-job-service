@@ -2,7 +2,7 @@ import logging
 
 from flask import Blueprint, jsonify, request
 
-from job_service.adapter.db import CLIENT, swap_client
+from job_service.adapter.db import CLIENT
 from job_service.model.request import MaintenanceStatusRequest
 
 logger = logging.getLogger()
