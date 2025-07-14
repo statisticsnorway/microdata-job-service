@@ -117,6 +117,7 @@ def _transfer_targets(mongo_client: MongoDbClient):
                 json.dumps(target.last_updated_by.model_dump(by_alias=True)),
             ),
         )
+    conn.commit()
 
 
 def _conn(db_path) -> sqlite3.Connection:
