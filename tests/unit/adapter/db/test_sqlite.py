@@ -294,8 +294,7 @@ def test_update_job_completed():
     existing_job = CLIENT.get_job(2)
     assert existing_job.status == "queued"
     updated_job = CLIENT.update_job(
-        "2",
-        UpdateJobRequest(status="completed"),
+        "2", UpdateJobRequest(status="completed")
     )
     assert updated_job
     assert updated_job.status == "completed"
@@ -309,9 +308,7 @@ def test_update_job_completed():
 def test_update_job_failed():
     existing_job = CLIENT.get_job(2)
     assert existing_job.status == "queued"
-    updated_job = CLIENT.update_job(
-        "2", UpdateJobRequest(status="failed")
-    )
+    updated_job = CLIENT.update_job("2", UpdateJobRequest(status="failed"))
     assert updated_job
     assert updated_job.status == "failed"
     assert updated_job.log[0].message == "Set status: failed"
