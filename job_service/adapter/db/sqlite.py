@@ -328,11 +328,25 @@ class SqliteDbClient:
                     "UPDATE job SET parameters = json_set(parameters, '$.description', ?) WHERE job_id = ?",
                     (body.description, int(job_id)),
                 )
+                cursor.execute(
+                    """
+                    INSERT INTO job_log (job_id, msg, at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (job_id, "Added update description", datetime.now()),
+                )
 
             if body.status is not None:
                 cursor.execute(
                     "UPDATE job SET status = ? WHERE job_id = ?",
                     (body.status, job_id),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO job_log (job_id, msg, at)
+                    VALUES (?, ?, ?)
+                    """,
+                    (job_id, f"Set status: {body.status}", datetime.now()),
                 )
 
             if body.log is not None:
