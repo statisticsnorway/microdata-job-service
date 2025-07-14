@@ -293,9 +293,7 @@ def test_new_job_different_created_at():
 def test_update_job_completed():
     existing_job = CLIENT.get_job(2)
     assert existing_job.status == "queued"
-    updated_job = CLIENT.update_job(
-        "2", UpdateJobRequest(status="completed")
-    )
+    updated_job = CLIENT.update_job("2", UpdateJobRequest(status="completed"))
     assert updated_job
     assert updated_job.status == "completed"
     assert updated_job.log[0].message == "Set status: completed"
