@@ -129,3 +129,4 @@ venv.bak/
 
 # vscode
 .vscode
+test.db
