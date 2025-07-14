@@ -116,19 +116,26 @@ class SqliteDbClient:
                 j.parameters,
                 j.created_at,
                 j.created_by,
-                CASE 
-                    WHEN jl.msg IS NULL THEN '[]'
-                    ELSE json_group_array(
-                        json_object('at', jl.at, 'message', jl.msg)
+                COALESCE((
+                    SELECT json_group_array(
+                        json_object(
+                            'at', job_log_row.at,
+                            'message', job_log_row.msg
+                        )
                     )
-                END AS logs_json
+                    FROM (
+                        SELECT at, msg
+                        FROM job_log
+                        WHERE job_log.job_id = j.job_id
+                        ORDER BY at ASC
+                    ) AS job_log_row
+                ), '[]') AS logs_json
             FROM job j
-            LEFT JOIN job_log jl ON j.job_id = jl.job_id
-            WHERE j.job_id = ?
+            WHERE j.job_id = ?;
             """,
             (job_id,),
         ).fetchone()
-        return None if job_row["job_id"] is None else job_row
+        return job_row
 
     def get_job(self, job_id: int | str) -> Job:
         """
@@ -173,16 +180,22 @@ class SqliteDbClient:
                     j.parameters,
                     j.created_at,
                     j.created_by,
-                    CASE 
-                        WHEN jl.msg IS NULL THEN '[]'
-                        ELSE json_group_array(
-                            json_object('at', jl.at, 'message', jl.msg)
+                    COALESCE((
+                        SELECT json_group_array(
+                            json_object(
+                                'at', job_log_row.at,
+                                'message', job_log_row.msg
+                            )
                         )
-                    END AS logs_json
+                        FROM (
+                            SELECT at, msg
+                            FROM job_log
+                            WHERE job_log.job_id = j.job_id
+                            ORDER BY at ASC
+                        ) AS job_log_row
+                    ), '[]') AS logs_json
                 FROM job j
-                LEFT JOIN job_log jl ON j.job_id = jl.job_id
                 {query.to_sqlite_where_condition()}
-                GROUP BY j.job_id; 
                 """,
             ).fetchall()
             if not job_rows:
@@ -221,16 +234,22 @@ class SqliteDbClient:
                     j.parameters,
                     j.created_at,
                     j.created_by,
-                    CASE 
-                        WHEN jl.msg IS NULL THEN '[]'
-                        ELSE json_group_array(
-                            json_object('at', jl.at, 'message', jl.msg)
+                    COALESCE((
+                        SELECT json_group_array(
+                            json_object(
+                                'at', job_log_row.at,
+                                'message', job_log_row.msg
+                            )
                         )
-                    END AS logs_json
+                        FROM (
+                            SELECT at, msg
+                            FROM job_log
+                            WHERE job_log.job_id = j.job_id
+                            ORDER BY at ASC
+                        ) AS job_log_row
+                    ), '[]') AS logs_json
                 FROM job j
-                LEFT JOIN job_log jl ON j.job_id = jl.job_id
-                WHERE j.target = ?
-                GROUP BY j.job_id; 
+                WHERE j.target = ?;
                 """,
                 (name,),
             ).fetchall()
