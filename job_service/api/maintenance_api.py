@@ -2,7 +2,7 @@ import logging
 
 from flask import Blueprint, jsonify, request
 
-from job_service.adapter.db import CLIENT, swap_client
+from job_service.adapter.db import CLIENT
 from job_service.model.request import MaintenanceStatusRequest
 
 logger = logging.getLogger()
@@ -35,11 +35,3 @@ def get_history():
     logger.info("GET /maintenance-history")
     documents = CLIENT.get_maintenance_history()
     return jsonify(documents), 200
-
-
-@maintenance_api.get("/migration-swap")
-def swap_client_live():
-    x_api_key = request.headers.get("x-api-key")
-    logger.info("GET /migration-swap")
-    swap_client(x_api_key)
-    return {"message": "OK"}, 200
