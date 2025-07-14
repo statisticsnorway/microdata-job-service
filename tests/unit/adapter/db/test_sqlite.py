@@ -256,12 +256,11 @@ def test_update_job():
         "2",
         UpdateJobRequest(
             status="validating",
-            log="update log",
         ),
     )
     assert updated_job
     assert updated_job.status == "validating"
-    assert updated_job.log[0].message == "update log"
+    assert updated_job.log[0].message == "Set status: validating"
     assert updated_job == CLIENT.get_job(2)
     updated_job = CLIENT.update_job(
         "2",
@@ -272,7 +271,8 @@ def test_update_job():
     )
     assert updated_job
     assert updated_job.status == "pseudonymizing"
-    assert updated_job.log[1].message == "even newer update log"
+    assert updated_job.log[1].message == "Set status: pseudonymizing"
+    assert updated_job.log[2].message == "even newer update log"
     assert updated_job == CLIENT.get_job(2)
 
     with pytest.raises(NotFoundException):
@@ -295,14 +295,11 @@ def test_update_job_completed():
     assert existing_job.status == "queued"
     updated_job = CLIENT.update_job(
         "2",
-        UpdateJobRequest(
-            status="completed",
-            log="my new log",
-        ),
+        UpdateJobRequest(status="completed"),
     )
     assert updated_job
     assert updated_job.status == "completed"
-    assert updated_job.log[0].message == "my new log"
+    assert updated_job.log[0].message == "Set status: completed"
     assert updated_job == CLIENT.get_job(2)
 
     with pytest.raises(JobAlreadyCompleteException):
@@ -313,15 +310,11 @@ def test_update_job_failed():
     existing_job = CLIENT.get_job(2)
     assert existing_job.status == "queued"
     updated_job = CLIENT.update_job(
-        "2",
-        UpdateJobRequest(
-            status="failed",
-            log="my new log",
-        ),
+        "2", UpdateJobRequest(status="failed")
     )
     assert updated_job
     assert updated_job.status == "failed"
-    assert updated_job.log[0].message == "my new log"
+    assert updated_job.log[0].message == "Set status: failed"
     assert updated_job == CLIENT.get_job(2)
 
     with pytest.raises(JobAlreadyCompleteException):
