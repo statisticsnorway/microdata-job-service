@@ -1,6 +1,8 @@
-from flask import url_for
 from pytest_mock import MockFixture
 
+from fastapi.testclient import TestClient
+
+from job_service.app import app
 from job_service.adapter.db import CLIENT
 from job_service.api import auth
 from job_service.config import environment
@@ -10,6 +12,10 @@ from job_service.model.request import (
     NewJobRequest,
     UpdateJobRequest,
 )
+
+
+client = TestClient(app)
+
 
 NOT_FOUND_MESSAGE = "not found"
 JOB_ID = "123-123-123-123"
@@ -70,51 +76,47 @@ BUMP_JOB_REQUEST = {
 UPDATE_JOB_REQUEST = {"status": "initiated", "log": "extra logging"}
 
 
-def test_get_jobs(flask_app, mocker: MockFixture):
+def test_get_jobs(mocker: MockFixture):
     get_jobs = mocker.patch.object(CLIENT, "get_jobs", return_value=JOB_LIST)
-    response = flask_app.get(
-        url_for(
-            "job_api.get_jobs",
-            status="completed",
-            operation=["ADD", "CHANGE", "PATCH_METADATA"],
-        ),
+    response = client.get(
+        "jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
     )
-    assert response.json == [
+    assert response.json() == [
         job.model_dump(exclude_none=True, by_alias=True) for job in JOB_LIST
     ]
     assert response.status_code == 200
     get_jobs.assert_called_once()
 
 
-def test_get_job(flask_app, mocker: MockFixture):
+def test_get_job(mocker: MockFixture):
     get_job = mocker.patch.object(CLIENT, "get_job", return_value=JOB_LIST[0])
-    response = flask_app.get(url_for("job_api.get_job", job_id=JOB_ID))
+    response = client.get(f"/jobs/{JOB_ID}")
     get_job.assert_called_once()
     get_job.assert_called_with(JOB_ID)
     assert response.status_code == 200
-    assert response.json == JOB_LIST[0].model_dump(
+    assert response.json() == JOB_LIST[0].model_dump(
         exclude_none=True, by_alias=True
     )
 
 
-def test_get_job_not_found(flask_app, mocker: MockFixture):
+def test_get_job_not_found(mocker: MockFixture):
     get_job = mocker.patch.object(
         CLIENT, "get_job", side_effect=NotFoundException(NOT_FOUND_MESSAGE)
     )
-    response = flask_app.get(url_for("job_api.get_job", job_id=JOB_ID))
+    response = client.get(f"/jobs/{JOB_ID}")
     get_job.assert_called_once()
     get_job.assert_called_with(JOB_ID)
     assert response.status_code == 404
-    assert response.json == {"message": NOT_FOUND_MESSAGE}
+    assert response.json() == {"message": NOT_FOUND_MESSAGE}
 
 
-def test_new_job(flask_app, mocker: MockFixture):
+def test_new_job(mocker: MockFixture):
     mocker.patch.object(
         auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
     )
     new_job = mocker.patch.object(CLIENT, "new_job", return_value=JOB_LIST[0])
     update_target = mocker.patch.object(CLIENT, "update_target")
-    response = flask_app.post(url_for("job_api.new_job"), json=NEW_JOB_REQUEST)
+    response = client.post("/jobs", json=NEW_JOB_REQUEST)
     assert new_job.call_count == 2
     new_job.assert_any_call(
         NewJobRequest(**NEW_JOB_REQUEST["jobs"][0]), USER_INFO
@@ -124,54 +126,46 @@ def test_new_job(flask_app, mocker: MockFixture):
     )
     assert update_target.call_count == 2
     assert response.status_code == 200
-    assert response.json == [
+    assert response.json() == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
     ]
 
 
-def test_update_job(flask_app, mocker: MockFixture):
+def test_update_job(mocker: MockFixture):
     update_job = mocker.patch.object(
         CLIENT, "update_job", return_value=JOB_LIST[0]
     )
     update_target = mocker.patch.object(CLIENT, "update_target")
-    response = flask_app.put(
-        url_for("job_api.update_job", job_id=JOB_ID), json=UPDATE_JOB_REQUEST
-    )
+    response = client.put(f"/jobs/{JOB_ID}", json=UPDATE_JOB_REQUEST)
     update_target.assert_called_once()
     update_job.assert_called_once()
     update_job.assert_called_with(
         JOB_ID, UpdateJobRequest(**UPDATE_JOB_REQUEST)
     )
     assert response.status_code == 200
-    assert response.json == {"message": f"Updated job with jobId {JOB_ID}"}
+    assert response.json() == {"message": f"Updated job with jobId {JOB_ID}"}
 
 
-def test_update_job_bad_request(flask_app, mocker: MockFixture):
+def test_update_job_bad_request(mocker: MockFixture):
     update_target = mocker.patch.object(CLIENT, "update_target")
-    response = flask_app.put(
-        url_for("job_api.update_job", job_id=JOB_ID),
+    response = client.put(
+        f"/jobs/{JOB_ID}",
         json={"status": "no-such-status"},
     )
     update_target.assert_not_called()
     assert response.status_code == 400
-    assert "validation error for UpdateJobRequest" in response.json.get(
-        "message"
-    )
+    assert response.json().get("details") is not None
 
 
-def test_update_job_disabled_bump(flask_app, mocker: MockFixture):
+def test_update_job_disabled_bump(mocker: MockFixture):
     environment._ENVIRONMENT_VARIABLES["BUMP_ENABLED"] = False
     mocker.patch.object(
         auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
     )
-    response = flask_app.post(
-        url_for("job_api.new_job"), json=BUMP_JOB_REQUEST
-    )
-
-    print(response.json)
+    response = client.post("/jobs", json=BUMP_JOB_REQUEST)
     assert response.status_code == 200
-    assert response.json == [
+    assert response.json() == [
         {
             "msg": "FAILED: Bumping the datastore is disabled",
             "status": "FAILED",
