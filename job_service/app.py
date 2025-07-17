@@ -1,8 +1,10 @@
 import logging
 
-from flask import Flask
+from starlette.status import HTTP_400_BAD_REQUEST
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
-from werkzeug.exceptions import HTTPException
+from starlette.responses import JSONResponse
 
 from job_service.api.job_api import job_api
 from job_service.api.targets_api import targets_api
@@ -20,61 +22,66 @@ from job_service.config.logging import setup_logging
 
 logger = logging.getLogger()
 
-app = Flask(__name__)
-app.register_blueprint(job_api)
-app.register_blueprint(importable_datasets_api)
-app.register_blueprint(targets_api)
-app.register_blueprint(maintenance_api)
-app.register_blueprint(observability_api)
+app = FastAPI()
+app.include_router(job_api)
+app.include_router(importable_datasets_api)
+app.include_router(targets_api)
+app.include_router(maintenance_api)
+app.include_router(observability_api)
 
 setup_logging(app)
 
 
-@app.errorhandler(NotFoundException)
-def handle_not_found(e):
+@app.exception_handler(NotFoundException)
+def handle_not_found(_req: Request, e: NotFoundException):
     logger.warning(e, exc_info=True)
-    return {"message": str(e)}, 404
+    return JSONResponse(status_code=404, content={"message": str(e)})
 
 
-@app.errorhandler(ValidationError)
-def handle_bad_request(e):
+@app.exception_handler(ValidationError)
+def handle_bad_request(_req: Request, e: ValidationError):
     logger.warning(e, exc_info=True)
-    return {"message": str(e)}, 400
+    return JSONResponse(status_code=400, content={"message": str(e)})
 
 
-@app.errorhandler(JobExistsException)
-def handle_job_exists(e):
+@app.exception_handler(JobExistsException)
+def handle_job_exists(_req: Request, e: JobExistsException):
     logger.warning(e, exc_info=True)
-    return {"message": str(e)}, 400
+    return JSONResponse(status_code=400, content={"message": str(e)})
 
 
-@app.errorhandler(AuthError)
-def handle_auth_error(e):
+@app.exception_handler(AuthError)
+def handle_auth_error(_req: Request, e: AuthError):
     logger.warning(e, exc_info=True)
-    return {"message": str(e)}, 401
+    return JSONResponse(status_code=401, content={"message": str(e)})
 
 
-@app.errorhandler(Exception)
-def handle_unknown_error(e):
+@app.exception_handler(Exception)
+def handle_unknown_error(_req: Request, e: Exception):
     logger.exception(e)
-    return {"message": "Internal Server Error"}, 500
+    return JSONResponse(
+        status_code=500, content={"message": "Internal Server Error"}
+    )
 
 
-@app.errorhandler(NameValidationError)
-def handle_invalid_name(e):
+@app.exception_handler(NameValidationError)
+def handle_invalid_name(_req: Request, e: NameValidationError):
     logger.warning(e, exc_info=True)
-    return {"message": str(e)}, 400
+    return JSONResponse(status_code=400, content={"message": str(e)})
 
 
-@app.errorhandler(HTTPException)
-def handle_http_exception(e: HTTPException):
-    if str(e.code).startswith("4"):
-        logger.warning(e, exc_info=True)
-    else:
-        logger.exception(e)
-    return {"message": f"{str(e.description)}"}, e.code
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    _req: Request, e: RequestValidationError
+):
+    logger.warning("Validation error: %s", e, exc_info=True)
+    return JSONResponse(
+        status_code=HTTP_400_BAD_REQUEST,
+        content={"message": "Bad Request", "details": e.errors()},
+    )
 
 
-# this is needed to run the application in IDE
 if __name__ == "__main__":
-    app.run(port=8000, host="0.0.0.0")
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

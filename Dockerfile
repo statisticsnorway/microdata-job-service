@@ -54,6 +54,6 @@ ENV PYTHONPATH "${PYTHONPATH}:/app:/app/dependencies"
 
 # Change to our non-root user
 USER microdata
+CMD ["-m", "gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--logger-class", "job_service.config.gunicorn.CustomLogger", "job_service.app:app", "--preload", "--workers", "1", "--bind", "0.0.0.0:8000","--limit-request-line", "8190"] 
 
-CMD [ "/app/dependencies/bin/gunicorn", "--logger-class", "job_service.config.gunicorn.CustomLogger", "job_service.app:app", "--bind", "0.0.0.0:8000", "--workers", "1"]
 
