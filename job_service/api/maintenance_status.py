@@ -23,7 +23,7 @@ def set_status(
         f"POST /maintenance-status with request body: {maintenance_status_request}"
     )
     new_status = database_client.set_maintenance_status(
-        maintenance_status_request
+        maintenance_status_request.msg, maintenance_status_request.paused
     )
     return new_status
 
