@@ -16,4 +16,3 @@ def test_client_does_not_send_x_request_id():
     # Check that header is set (non-empty)
     assert "X-Request-ID" in response.headers
     assert response.headers["X-Request-ID"] != ""
-
