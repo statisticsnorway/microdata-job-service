@@ -10,10 +10,11 @@ from job_service.adapter import db
 from job_service.api import auth
 from job_service.config import environment
 from job_service.exceptions import NotFoundException
-from job_service.adapter.db.models import Job, JobStatus, UserInfo
-from job_service.api.jobs.models import (
-    NewJobRequest,
-    UpdateJobRequest,
+from job_service.adapter.db.models import (
+    Job,
+    JobStatus,
+    UserInfo,
+    JobParameters,
 )
 
 
@@ -28,17 +29,21 @@ USER_INFO = UserInfo(**USER_INFO_DICT)
 JOB_LIST = [
     Job(
         job_id="123-123-123-123",
-        status="completed",
-        parameters={"target": "MY_DATASET", "operation": "ADD"},
+        status=JobStatus("completed"),
+        parameters=JobParameters.model_validate(
+            {"target": "MY_DATASET", "operation": "ADD"}
+        ),
         created_at="2022-05-18T11:40:22.519222",
-        created_by=USER_INFO_DICT,
+        created_by=USER_INFO,
     ),
     Job(
         job_id="123-123-123-123",
-        status="completed",
-        parameters={"target": "OTHER_DATASET", "operation": "ADD"},
+        status=JobStatus("completed"),
+        parameters=JobParameters.model_validate(
+            {"target": "OTHER_DATASET", "operation": "ADD"}
+        ),
         created_at="2022-05-18T11:40:22.519222",
-        created_by=USER_INFO_DICT,
+        created_by=USER_INFO,
     ),
 ]
 NEW_JOB_REQUEST = {
