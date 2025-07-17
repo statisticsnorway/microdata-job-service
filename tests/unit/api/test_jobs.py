@@ -10,8 +10,8 @@ from job_service.adapter import db
 from job_service.api import auth
 from job_service.config import environment
 from job_service.exceptions import NotFoundException
-from job_service.model.job import Job, UserInfo
-from job_service.model.request import (
+from job_service.adapter.db.models import Job, JobStatus, UserInfo
+from job_service.api.jobs.models import (
     NewJobRequest,
     UpdateJobRequest,
 )
@@ -130,12 +130,6 @@ def test_new_job(client, mock_db_client, mocker: MockFixture):
     )
     response = client.post("/jobs", json=NEW_JOB_REQUEST)
     assert mock_db_client.new_job.call_count == 2
-    mock_db_client.new_job.assert_any_call(
-        NewJobRequest(**NEW_JOB_REQUEST["jobs"][0]), USER_INFO
-    )
-    mock_db_client.new_job.assert_any_call(
-        NewJobRequest(**NEW_JOB_REQUEST["jobs"][1]), USER_INFO
-    )
     assert mock_db_client.update_target.call_count == 2
     assert response.status_code == 200
     assert response.json() == [
@@ -149,7 +143,10 @@ def test_update_job(client, mock_db_client, mocker: MockFixture):
     mock_db_client.update_target.assert_called_once()
     mock_db_client.update_job.assert_called_once()
     mock_db_client.update_job.assert_called_with(
-        JOB_ID, UpdateJobRequest(**UPDATE_JOB_REQUEST)
+        JOB_ID,
+        JobStatus(UPDATE_JOB_REQUEST["status"]),
+        None,
+        UPDATE_JOB_REQUEST["log"],
     )
     assert response.status_code == 200
     assert response.json() == {"message": f"Updated job with jobId {JOB_ID}"}

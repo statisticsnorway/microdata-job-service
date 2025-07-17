@@ -3,8 +3,8 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from job_service.model.job import Job, UserInfo
-from job_service.model.request import NewJobsRequest, NewJobRequest
+from job_service.adapter.db.models import Job, UserInfo
+from job_service.api.jobs.models import NewJobsRequest, NewJobRequest
 
 
 RESOURCE_DIR = "tests/resources/model"

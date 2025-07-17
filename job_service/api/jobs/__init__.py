@@ -4,43 +4,40 @@ from typing import Optional
 from fastapi import APIRouter, Query, Cookie, Depends
 
 from job_service.api import auth
-from job_service.adapter import db
 from job_service.config import environment
 from job_service.exceptions import BumpingDisabledException
-from job_service.model.job import JobStatus, Operation
-from job_service.model.request import (
+from job_service.adapter.db.models import JobStatus, Operation
+from job_service.api.jobs.models import (
     NewJobsRequest,
     UpdateJobRequest,
-    GetJobRequest,
 )
+from job_service.adapter import db
 
 logger = logging.getLogger()
 
-job_api = APIRouter()
+router = APIRouter()
 
 
-@job_api.get("/jobs")
+@router.get("/jobs")
 def get_jobs(
     status: Optional[str] = Query(None),
     operation: Optional[str] = Query(None),
-    ignoreCompleted: Optional[bool] = Query(None),
+    ignoreCompleted: bool = Query(False),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
-    validated_query = GetJobRequest(
-        status=JobStatus(status) if status else None,
-        operation=[Operation(op) for op in operation.split(",")]
-        if operation is not None
-        else None,
-        ignoreCompleted=ignoreCompleted,
-    )
-    logger.debug(f"GET /jobs with query: {validated_query}")
     return [
         job.model_dump(exclude_none=True, by_alias=True)
-        for job in database_client.get_jobs(validated_query)
+        for job in database_client.get_jobs(
+            status=JobStatus(status) if status else None,
+            operations=[Operation(op) for op in operation.split(",")]
+            if operation is not None
+            else None,
+            ignore_completed=ignoreCompleted,
+        )
     ]
 
 
-@job_api.post("/jobs")
+@router.post("/jobs")
 def new_job(
     validated_body: NewJobsRequest,
     authorization: str | None = Cookie(None),
@@ -61,7 +58,9 @@ def new_job(
                     "Bumping the datastore is disabled"
                 )
             else:
-                job = database_client.new_job(job_request, parsed_user_info)
+                job = database_client.new_job(
+                    job_request.generate_job_from_request("", parsed_user_info)
+                )
                 response_list.append(
                     {
                         "status": "queued",
@@ -84,7 +83,7 @@ def new_job(
     return response_list
 
 
-@job_api.get("/jobs/{job_id}")
+@router.get("/jobs/{job_id}")
 def get_job(
     job_id: str,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
@@ -95,7 +94,7 @@ def get_job(
     )
 
 
-@job_api.put("/jobs/{job_id}")
+@router.put("/jobs/{job_id}")
 def update_job(
     job_id: str,
     validated_body: UpdateJobRequest,
@@ -105,7 +104,12 @@ def update_job(
         f"PUT /jobs/{job_id} with request body: "
         f"{validated_body.model_dump(exclude_none=True, by_alias=True)}"
     )
-    job = database_client.update_job(job_id, validated_body)
+    job = database_client.update_job(
+        job_id,
+        validated_body.status,
+        validated_body.description,
+        validated_body.log,
+    )
     database_client.update_target(job)
     if job.parameters.target == "DATASTORE" and job.status == "completed":
         database_client.update_bump_targets(job)

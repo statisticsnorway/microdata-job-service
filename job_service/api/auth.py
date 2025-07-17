@@ -12,7 +12,7 @@ from jwt.exceptions import (
 
 from job_service.config import environment
 from job_service.exceptions import AuthError
-from job_service.model.job import UserInfo
+from job_service.adapter.db.models import UserInfo
 
 
 logger = logging.getLogger()

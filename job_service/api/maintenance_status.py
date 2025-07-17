@@ -2,14 +2,19 @@ import logging
 
 from fastapi import APIRouter, Depends
 from job_service.adapter import db
-from job_service.model.request import MaintenanceStatusRequest
+from job_service.model.camelcase_model import CamelModel
 
 logger = logging.getLogger()
 
-maintenance_api = APIRouter()
+router = APIRouter()
 
 
-@maintenance_api.post("/maintenance-status")
+class MaintenanceStatusRequest(CamelModel, extra="forbid"):
+    msg: str
+    paused: bool
+
+
+@router.post("/maintenance-status")
 def set_status(
     maintenance_status_request: MaintenanceStatusRequest,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
@@ -23,7 +28,7 @@ def set_status(
     return new_status
 
 
-@maintenance_api.get("/maintenance-status")
+@router.get("/maintenance-status")
 def get_status(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
@@ -35,7 +40,7 @@ def get_status(
     return document
 
 
-@maintenance_api.get("/maintenance-history")
+@router.get("/maintenance-history")
 def get_history(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):

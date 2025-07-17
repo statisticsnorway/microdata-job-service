@@ -2,27 +2,27 @@ from typing import Protocol
 
 from job_service.adapter.db.sqlite import SqliteDbClient
 from job_service.config import environment
-from job_service.model.job import Job, UserInfo
-from job_service.model.target import Target
-from job_service.model.request import (
-    GetJobRequest,
-    NewJobRequest,
-    UpdateJobRequest,
-    MaintenanceStatusRequest,
-)
+from job_service.adapter.db.models import Job, JobStatus, Target, Operation
 
 
 class DatabaseClient(Protocol):
     def get_job(self, job_id: int | str) -> Job: ...
-    def get_jobs(self, query: GetJobRequest) -> list[Job]: ...
+    def get_jobs(
+        self,
+        status: JobStatus | None,
+        operations: list[Operation] | None,
+        ignore_completed: bool = False,
+    ) -> list[Job]: ...
     def get_jobs_for_target(self, name: str) -> list[Job]: ...
-    def new_job(
-        self, new_job_request: NewJobRequest, user_info: UserInfo
+    def new_job(self, new_job: Job) -> Job: ...
+    def update_job(
+        self,
+        job_id: str,
+        status: JobStatus | None,
+        description: str | None,
+        log: str | None,
     ) -> Job: ...
-    def update_job(self, job_id: str, body: UpdateJobRequest) -> Job: ...
-    def set_maintenance_status(
-        self, status_request: MaintenanceStatusRequest
-    ) -> dict: ...
+    def set_maintenance_status(self, msg: str, paused: bool) -> dict: ...
     def get_latest_maintenance_status(self) -> dict: ...
     def get_maintenance_history(self) -> list[dict]: ...
     def initialize_maintenance(self) -> dict: ...

@@ -6,10 +6,10 @@ from job_service.adapter import db
 
 
 logger = logging.getLogger()
-targets_api = APIRouter()
+router = APIRouter()
 
 
-@targets_api.get("/targets")
+@router.get("/targets")
 def get_targets(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
@@ -21,7 +21,7 @@ def get_targets(
     ]
 
 
-@targets_api.get("/targets/{name}/jobs")
+@router.get("/targets/{name}/jobs")
 def get_target_jobs(
     name: str,
     database_client: db.DatabaseClient = Depends(db.get_database_client),

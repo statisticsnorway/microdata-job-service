@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import Mock
 from job_service.adapter import db
-from job_service.model.job import Job, UserInfo
-from job_service.model.target import Target
+from job_service.adapter.db.models import Job, UserInfo
+from job_service.adapter.db.models import Target
 from fastapi.testclient import TestClient
 
 from job_service.app import app

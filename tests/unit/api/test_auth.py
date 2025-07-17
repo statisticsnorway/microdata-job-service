@@ -3,7 +3,7 @@ from pytest import MonkeyPatch
 
 from job_service.api import auth
 from job_service.exceptions import AuthError
-from job_service.model.job import UserInfo
+from job_service.adapter.db.models import UserInfo
 from tests.resources import test_data
 from tests.util import generate_rsa_key_pairs, encode_jwt_payload
 

@@ -9,20 +9,20 @@ from pytest_mock import MockFixture
 from job_service.adapter.db.sqlite import (
     JobAlreadyCompleteException,
     NotFoundException,
-    MaintenanceStatusRequest,
     SqliteDbClient,
-    UpdateJobRequest,
     JobExistsException,
 )
-from job_service.model.job import (
+from job_service.adapter.db.models import (
     Job,
     UserInfo,
     DataStructureUpdate,
     DatastoreVersion,
     JobParameters,
+    Target,
 )
-from job_service.model.target import Target
-from job_service.model.request import GetJobRequest, NewJobRequest
+from job_service.api.jobs.models import NewJobRequest
+from job_service.api.maintenance_status import MaintenanceStatusRequest
+
 
 sqlite_file = "test.db"
 CLIENT = SqliteDbClient(f"sqlite://{sqlite_file}")
@@ -220,11 +220,11 @@ def test_get_job():
 
 def test_get_jobs():
     jobs = CLIENT.get_jobs(
-        GetJobRequest(status=None, operation=None, ignoreCompleted=False)
+        status=None, operations=None, ignore_completed=False
     )
     assert len(jobs) == 2
     jobs = CLIENT.get_jobs(
-        GetJobRequest(status="queued", operation=["ADD"], ignoreCompleted=True)
+        status="queued", operations=["ADD"], ignore_completed=True
     )
     assert len(jobs) == 1
 
@@ -236,16 +236,18 @@ def test_get_jobs_for_target():
 
 def test_new_job():
     job = CLIENT.new_job(
-        NewJobRequest(operation="ADD", target="NEW_DATASET"),
-        UserInfo(**USER_INFO_DICT),
+        NewJobRequest(
+            operation="ADD", target="NEW_DATASET"
+        ).generate_job_from_request("", UserInfo(**USER_INFO_DICT)),
     )
     assert job
     jobs = CLIENT.get_jobs_for_target("NEW_DATASET")
     assert len(jobs) == 1
     with pytest.raises(JobExistsException):
         CLIENT.new_job(
-            NewJobRequest(operation="ADD", target="NEW_DATASET"),
-            UserInfo(**USER_INFO_DICT),
+            NewJobRequest(
+                operation="ADD", target="NEW_DATASET"
+            ).generate_job_from_request("", UserInfo(**USER_INFO_DICT))
         )
 
 
@@ -253,10 +255,7 @@ def test_update_job():
     existing_job = CLIENT.get_job(2)
     assert existing_job.status == "queued"
     updated_job = CLIENT.update_job(
-        "2",
-        UpdateJobRequest(
-            status="validating",
-        ),
+        "2", status="validating", description=None, log=None
     )
     assert updated_job
     assert updated_job.status == "validating"
@@ -264,10 +263,9 @@ def test_update_job():
     assert updated_job == CLIENT.get_job(2)
     updated_job = CLIENT.update_job(
         "2",
-        UpdateJobRequest(
-            status="pseudonymizing",
-            log="even newer update log",
-        ),
+        status="pseudonymizing",
+        description=None,
+        log="even newer update log",
     )
     assert updated_job
     assert updated_job.status == "pseudonymizing"
@@ -276,7 +274,9 @@ def test_update_job():
     assert updated_job == CLIENT.get_job(2)
 
     with pytest.raises(NotFoundException):
-        CLIENT.update_job("33", UpdateJobRequest(status="validating"))
+        CLIENT.update_job(
+            "33", status="validating", description=None, log=None
+        )
 
 
 def test_new_job_different_created_at():
@@ -293,27 +293,31 @@ def test_new_job_different_created_at():
 def test_update_job_completed():
     existing_job = CLIENT.get_job(2)
     assert existing_job.status == "queued"
-    updated_job = CLIENT.update_job("2", UpdateJobRequest(status="completed"))
+    updated_job = CLIENT.update_job(
+        "2", status="completed", description=None, log=None
+    )
     assert updated_job
     assert updated_job.status == "completed"
     assert updated_job.log[0].message == "Set status: completed"
     assert updated_job == CLIENT.get_job(2)
 
     with pytest.raises(JobAlreadyCompleteException):
-        CLIENT.update_job("1", UpdateJobRequest(status="completed"))
+        CLIENT.update_job("1", status="completed", description=None, log=None)
 
 
 def test_update_job_failed():
     existing_job = CLIENT.get_job(2)
     assert existing_job.status == "queued"
-    updated_job = CLIENT.update_job("2", UpdateJobRequest(status="failed"))
+    updated_job = CLIENT.update_job(
+        "2", status="failed", description=None, log=None
+    )
     assert updated_job
     assert updated_job.status == "failed"
     assert updated_job.log[0].message == "Set status: failed"
     assert updated_job == CLIENT.get_job(2)
 
     with pytest.raises(JobAlreadyCompleteException):
-        CLIENT.update_job("1", UpdateJobRequest(status="failed"))
+        CLIENT.update_job("1", status="failed", description=None, log=None)
 
 
 def test_initialize_after_get_maintenance_latest_status(mocker: MockFixture):
@@ -333,20 +337,16 @@ def test_initialize_after_get_maintenance_history(mocker: MockFixture):
 
 def test_set_and_get_maintenance_status():
     maintenance_status = CLIENT.set_maintenance_status(
-        MaintenanceStatusRequest(
-            msg="test",
-            paused=True,
-        )
+        msg="test",
+        paused=True,
     )
     assert maintenance_status
     assert CLIENT.get_latest_maintenance_status() == maintenance_status
     assert CLIENT.get_maintenance_history() == [maintenance_status]
 
     new_maintenance_status = CLIENT.set_maintenance_status(
-        MaintenanceStatusRequest(
-            msg="test2",
-            paused=False,
-        )
+        msg="test2",
+        paused=False,
     )
     assert new_maintenance_status
     assert CLIENT.get_latest_maintenance_status() == new_maintenance_status
