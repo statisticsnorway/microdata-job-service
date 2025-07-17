@@ -7,16 +7,17 @@ license = "Apache 2.0"
 
 [tool.poetry.dependencies]
 python = "^3.13"
-Flask = "^3.1.1"
 pydantic = "^2.10.0"
 PyJWT = "^2.4.0"
 cryptography = "^44.0.1"
 gunicorn = "^23.0.0"
+fastapi = "^0.116.1"
+uvicorn = "^0.35.0"
+httpx = "^0.28.1"
 
 [tool.poetry.group.dev.dependencies]
 requests = "^2.32.4"
 pytest = "^8.0.1"
-pytest-dotenv = "^0.5.2"
 pytest-cov = "^6.0.0"
 pytest-mock = "^3.7.0"
 ruff = "^0.11.0"
