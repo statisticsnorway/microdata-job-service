@@ -26,7 +26,7 @@ def get_jobs(
     ignoreCompleted: Optional[bool] = Query(None),
 ):
     validated_query = GetJobRequest(
-        status=JobStatus(status),
+        status=JobStatus(status) if status else None,
         operation=[Operation(op) for op in operation.split(",")]
         if operation is not None
         else None,
