@@ -114,13 +114,13 @@ class Job(CamelModel, use_enum_values=True):
             case "SET_STATUS":
                 return [
                     self.parameters.operation,
-                    self.parameters.release_status,
+                    str(self.parameters.release_status),
                 ]
             case "BUMP":
                 return [
-                    self.parameters.operation,
-                    self.parameters.bump_from_version,
-                    self.parameters.bump_to_version,
+                    str(self.parameters.operation),
+                    str(self.parameters.bump_from_version),
+                    str(self.parameters.bump_to_version),
                 ]
             case _:
                 return [self.parameters.operation]

@@ -79,7 +79,7 @@ class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
             )
         return Job(
             job_id=job_id,
-            status="queued",
+            status=JobStatus("queued"),
             parameters=job_parameters,
             created_at=datetime.now().isoformat(),
             created_by=user_info,
