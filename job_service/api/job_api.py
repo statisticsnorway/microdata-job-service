@@ -1,10 +1,13 @@
 import logging
+from typing import Optional
 
-from flask import Blueprint, jsonify, request
+from fastapi import APIRouter, Query, Cookie
+
 from job_service.adapter.db import CLIENT
 from job_service.api import auth
 from job_service.config import environment
 from job_service.exceptions import BumpingDisabledException
+from job_service.model.job import JobStatus, Operation
 from job_service.model.request import (
     NewJobsRequest,
     UpdateJobRequest,
@@ -13,33 +16,37 @@ from job_service.model.request import (
 
 logger = logging.getLogger()
 
-job_api = Blueprint("job_api", __name__)
+job_api = APIRouter()
 
 
 @job_api.get("/jobs")
-def get_jobs():
-    operation_arg = request.args.get("operation") or None
+def get_jobs(
+    status: Optional[str] = Query(None),
+    operation: Optional[str] = Query(None),
+    ignoreCompleted: Optional[bool] = Query(None),
+):
     validated_query = GetJobRequest(
-        status=request.args.get("status"),
-        operation=operation_arg.split(",")
-        if operation_arg is not None
+        status=JobStatus(status),
+        operation=[Operation(op) for op in operation.split(",")]
+        if operation is not None
         else None,
-        ignoreCompleted=request.args.get("ignoreCompleted"),
+        ignoreCompleted=ignoreCompleted,
     )
     logger.debug(f"GET /jobs with query: {validated_query}")
-    jobs = CLIENT.get_jobs(validated_query)
-    return jsonify(
-        [job.model_dump(exclude_none=True, by_alias=True) for job in jobs]
-    )
+    return [
+        job.model_dump(exclude_none=True, by_alias=True)
+        for job in CLIENT.get_jobs(validated_query)
+    ]
 
 
 @job_api.post("/jobs")
-def new_job():
-    validated_body = NewJobsRequest(**request.json)
+def new_job(
+    validated_body: NewJobsRequest,
+    authorization: str | None = Cookie(None),
+    user_info: str | None = Cookie(None),
+):
     logger.info(f"POST /jobs with request body: {validated_body}")
-    user_info = auth.authorize_user(
-        request.cookies.get("authorization"), request.cookies.get("user-info")
-    )
+    parsed_user_info = auth.authorize_user(authorization, user_info)
     response_list = []
     for job_request in validated_body.jobs:
         try:
@@ -52,7 +59,7 @@ def new_job():
                     "Bumping the datastore is disabled"
                 )
             else:
-                job = CLIENT.new_job(job_request, user_info)
+                job = CLIENT.new_job(job_request, parsed_user_info)
                 response_list.append(
                     {
                         "status": "queued",
@@ -72,19 +79,17 @@ def new_job():
         except Exception as e:
             logger.exception(e)
             response_list.append({"status": "FAILED", "msg": "FAILED"})
-    return jsonify(response_list), 200
+    return response_list
 
 
-@job_api.get("/jobs/<job_id>")
+@job_api.get("/jobs/{job_id}")
 def get_job(job_id: str):
     logger.info(f"GET /jobs/{job_id}")
-    job = CLIENT.get_job(job_id)
-    return job.model_dump(exclude_none=True, by_alias=True)
+    return CLIENT.get_job(job_id).model_dump(exclude_none=True, by_alias=True)
 
 
-@job_api.put("/jobs/<job_id>")
-def update_job(job_id: str):
-    validated_body = UpdateJobRequest(**request.json)
+@job_api.put("/jobs/{job_id}")
+def update_job(job_id: str, validated_body: UpdateJobRequest):
     logger.info(
         f"PUT /jobs/{job_id} with request body: "
         f"{validated_body.model_dump(exclude_none=True, by_alias=True)}"

@@ -1,7 +1,7 @@
-from flask import Blueprint
+from fastapi import APIRouter
 
 
-observability_api = Blueprint("observability", __name__)
+observability_api = APIRouter()
 
 
 @observability_api.get("/health/alive")
