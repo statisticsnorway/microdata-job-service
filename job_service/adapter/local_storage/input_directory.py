@@ -7,14 +7,20 @@ from tarfile import ReadError
 from typing import List
 
 from job_service.config import environment
-from job_service.model.importable_dataset import ImportableDataset
+from job_service.model.camelcase_model import CamelModel
 from job_service.exceptions import NotFoundException, NameValidationError
-
 
 logger = logging.getLogger()
 
 INPUT_DIR = Path(environment.get("INPUT_DIR"))
 ARCHIVE_DIR = INPUT_DIR / "archive"
+
+
+class ImportableDataset(CamelModel, extra="forbid"):
+    dataset_name: str
+    has_metadata: bool
+    has_data: bool
+    is_archived: bool = False
 
 
 def _has_data(tar: tarfile.TarFile) -> bool:

@@ -6,13 +6,14 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from starlette.responses import JSONResponse
 
-from job_service.api.job_api import job_api
-from job_service.api.targets_api import targets_api
-from job_service.api.importable_datasets_api import importable_datasets_api
-from job_service.api.maintenance_api import maintenance_api
-from job_service.api.observability_api import observability_api
+from job_service.api import jobs
+from job_service.api import targets
+from job_service.api import importable_datasets
+from job_service.api import maintenance_status
+from job_service.api import observability
 from job_service.exceptions import (
     AuthError,
+    InternalServerError,
     JobExistsException,
     NotFoundException,
     NameValidationError,
@@ -23,11 +24,11 @@ from job_service.config.logging import setup_logging
 logger = logging.getLogger()
 
 app = FastAPI()
-app.include_router(job_api)
-app.include_router(importable_datasets_api)
-app.include_router(targets_api)
-app.include_router(maintenance_api)
-app.include_router(observability_api)
+app.include_router(jobs.router)
+app.include_router(importable_datasets.router)
+app.include_router(targets.router)
+app.include_router(maintenance_status.router)
+app.include_router(observability.router)
 
 setup_logging(app)
 
@@ -58,6 +59,14 @@ def handle_auth_error(_req: Request, e: AuthError):
 
 @app.exception_handler(Exception)
 def handle_unknown_error(_req: Request, e: Exception):
+    logger.exception(e)
+    return JSONResponse(
+        status_code=500, content={"message": "Internal Server Error"}
+    )
+
+
+@app.exception_handler(InternalServerError)
+def handle_internal_server_error(_req: Request, e: InternalServerError):
     logger.exception(e)
     return JSONResponse(
         status_code=500, content={"message": "Internal Server Error"}

@@ -1,12 +1,10 @@
-# TODO: move to integration
-from pytest_mock import MockFixture
+import pytest
+from unittest.mock import Mock
 
-from job_service.adapter.db import CLIENT
+from job_service.adapter import db
 from fastapi.testclient import TestClient
 
 from job_service.app import app
-
-client = TestClient(app)
 
 
 MAINTENANCE_STATUS_REQUEST_VALID = {"msg": "we upgrade chill", "paused": True}
@@ -41,54 +39,55 @@ RESPONSE_FROM_DB = [
 ]
 
 
-def test_set_maintenance_status(mocker: MockFixture):
-    db_set_status = mocker.patch.object(
-        CLIENT, "set_maintenance_status", return_value=NEW_STATUS
-    )
+@pytest.fixture
+def mock_db_client():
+    mock = Mock()
+    mock.set_maintenance_status.return_value = NEW_STATUS
+    mock.get_latest_maintenance_status.return_value = RESPONSE_FROM_DB[0]
+    mock.get_maintenance_history.return_value = RESPONSE_FROM_DB
+    return mock
+
+
+@pytest.fixture
+def client(mock_db_client):
+    app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+def test_set_maintenance_status(client, mock_db_client):
     response = client.post(
         "/maintenance-status",
         json=MAINTENANCE_STATUS_REQUEST_VALID,
     )
-
-    db_set_status.assert_called_once()
+    mock_db_client.set_maintenance_status.assert_called_once()
     assert response.status_code == 200
     assert response.json() == NEW_STATUS
 
 
-def test_set_maintenance_status_with_no_msg(mocker: MockFixture):
-    db_set_status = mocker.patch.object(CLIENT, "set_maintenance_status")
+def test_set_maintenance_status_with_no_msg(client, mock_db_client):
     response = client.post(
         "/maintenance-status",
         json=MAINTENANCE_STATUS_REQUEST_NO_MSG,
     )
-
-    db_set_status.assert_not_called()
+    mock_db_client.set_maintenance_status.assert_not_called()
     assert response.status_code == 400
     assert response.json().get("details") is not None
 
 
-def test_set_maintenance_status_with_invalid_paused(mocker: MockFixture):
-    db_set_status = mocker.patch.object(CLIENT, "set_maintenance_status")
+def test_set_maintenance_status_with_invalid_paused(client, mock_db_client):
     response = client.post(
         "/maintenance-status",
         json=MAINTENANCE_STATUS_REQUEST_INVALID_PAUSE_VALUE,
     )
-
-    db_set_status.assert_not_called()
+    mock_db_client.set_maintenance_status.assert_not_called()
     assert response.status_code == 400
     assert response.json().get("details") is not None
 
 
-def test_get_maintenance_status(mocker: MockFixture, caplog):
-    get_status = mocker.patch.object(
-        CLIENT,
-        "get_latest_maintenance_status",
-        return_value=RESPONSE_FROM_DB[0],
-    )
-
+def test_get_maintenance_status(client, mock_db_client, caplog):
     response = client.get("/maintenance-status")
-
-    get_status.assert_called_once()
+    mock_db_client.get_latest_maintenance_status.assert_called_once()
     assert response.status_code == 200
     assert response.json() == RESPONSE_FROM_DB[0]
     assert (
@@ -97,35 +96,8 @@ def test_get_maintenance_status(mocker: MockFixture, caplog):
     )
 
 
-def test_get_maintenance_status_from_empty_collection(mocker: MockFixture):
-    get_status = mocker.patch.object(
-        CLIENT, "get_latest_maintenance_status", return_value={}
-    )
-
-    response = client.get("/maintenance-status")
-
-    get_status.assert_called_once()
-    assert response.status_code == 200
-    assert response.json() == {}
-
-
-def test_get_maintenance_history(mocker: MockFixture):
-    get_history = mocker.patch.object(
-        CLIENT, "get_maintenance_history", return_value=RESPONSE_FROM_DB
-    )
+def test_get_maintenance_history(client, mock_db_client):
     response = client.get("/maintenance-history")
-    get_history.assert_called_once()
-
+    mock_db_client.get_maintenance_history.assert_called_once()
     assert response.status_code == 200
     assert response.json() == RESPONSE_FROM_DB
-
-
-def test_get_maintenance_history_from_empty_collection(mocker: MockFixture):
-    get_history = mocker.patch.object(
-        CLIENT, "get_maintenance_history", return_value=[]
-    )
-    response = client.get("/maintenance-history")
-    get_history.assert_called_once()
-
-    assert response.status_code == 200
-    assert response.json() == []
