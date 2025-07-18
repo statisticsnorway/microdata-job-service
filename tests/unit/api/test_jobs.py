@@ -1,13 +1,11 @@
 import pytest
-from pytest_mock import MockFixture
 
 from unittest.mock import Mock
 
 from fastapi.testclient import TestClient
 
 from job_service.app import app
-from job_service.adapter import db
-from job_service.api import auth
+from job_service.adapter import db, auth
 from job_service.config import environment
 from job_service.exceptions import NotFoundException
 from job_service.adapter.db.models import (
@@ -93,13 +91,21 @@ def mock_db_client():
 
 
 @pytest.fixture
-def client(mock_db_client):
+def mock_auth_client():
+    mock = Mock()
+    mock.authorize_user.return_value = USER_INFO
+    return mock
+
+
+@pytest.fixture
+def client(mock_db_client, mock_auth_client):
     app.dependency_overrides[db.get_database_client] = lambda: mock_db_client
+    app.dependency_overrides[auth.get_auth_client] = lambda: mock_auth_client
     yield TestClient(app)
     app.dependency_overrides.clear()
 
 
-def test_get_jobs(client, mock_db_client, mocker: MockFixture):
+def test_get_jobs(client, mock_db_client):
     response = client.get(
         "jobs?status=completed&operation=ADD,CHANGE,PATCH_METADATA"
     )
@@ -110,7 +116,7 @@ def test_get_jobs(client, mock_db_client, mocker: MockFixture):
     mock_db_client.get_jobs.assert_called_once()
 
 
-def test_get_job(client, mock_db_client, mocker: MockFixture):
+def test_get_job(client, mock_db_client):
     response = client.get(f"/jobs/{JOB_ID}")
     mock_db_client.get_job.assert_called_once()
     mock_db_client.get_job.assert_called_with(JOB_ID)
@@ -120,7 +126,7 @@ def test_get_job(client, mock_db_client, mocker: MockFixture):
     )
 
 
-def test_get_job_not_found(client, mock_db_client, mocker: MockFixture):
+def test_get_job_not_found(client, mock_db_client):
     mock_db_client.get_job.side_effect = NotFoundException(NOT_FOUND_MESSAGE)
     response = client.get(f"/jobs/{JOB_ID}")
     mock_db_client.get_job.assert_called_once()
@@ -129,13 +135,11 @@ def test_get_job_not_found(client, mock_db_client, mocker: MockFixture):
     assert response.json() == {"message": NOT_FOUND_MESSAGE}
 
 
-def test_new_job(client, mock_db_client, mocker: MockFixture):
-    mocker.patch.object(
-        auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
-    )
+def test_new_job(client, mock_db_client, mock_auth_client):
     response = client.post("/jobs", json=NEW_JOB_REQUEST)
     assert mock_db_client.new_job.call_count == 2
     assert mock_db_client.update_target.call_count == 2
+    mock_auth_client.authorize_user.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [
         {"msg": "CREATED", "status": "queued", "job_id": JOB_ID},
@@ -143,7 +147,7 @@ def test_new_job(client, mock_db_client, mocker: MockFixture):
     ]
 
 
-def test_update_job(client, mock_db_client, mocker: MockFixture):
+def test_update_job(client, mock_db_client):
     response = client.put(f"/jobs/{JOB_ID}", json=UPDATE_JOB_REQUEST)
     mock_db_client.update_target.assert_called_once()
     mock_db_client.update_job.assert_called_once()
@@ -157,7 +161,7 @@ def test_update_job(client, mock_db_client, mocker: MockFixture):
     assert response.json() == {"message": f"Updated job with jobId {JOB_ID}"}
 
 
-def test_update_job_bad_request(client, mock_db_client, mocker: MockFixture):
+def test_update_job_bad_request(client, mock_db_client):
     response = client.put(
         f"/jobs/{JOB_ID}",
         json={"status": "no-such-status"},
@@ -167,11 +171,8 @@ def test_update_job_bad_request(client, mock_db_client, mocker: MockFixture):
     assert response.json().get("details") is not None
 
 
-def test_update_job_disabled_bump(client, mock_db_client, mocker: MockFixture):
+def test_update_job_disabled_bump(client):
     environment._ENVIRONMENT_VARIABLES["BUMP_ENABLED"] = False
-    mocker.patch.object(
-        auth, "authorize_user", return_value=UserInfo(**USER_INFO_DICT)
-    )
     response = client.post("/jobs", json=BUMP_JOB_REQUEST)
     assert response.status_code == 200
     assert response.json() == [

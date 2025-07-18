@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Query, Cookie, Depends
 
-from job_service.api import auth
+from job_service.adapter import auth
 from job_service.config import environment
 from job_service.exceptions import BumpingDisabledException
 from job_service.adapter.db.models import JobStatus, Operation
@@ -43,9 +43,10 @@ def new_job(
     authorization: str | None = Cookie(None),
     user_info: str | None = Cookie(None),
     database_client: db.DatabaseClient = Depends(db.get_database_client),
+    auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ):
     logger.info(f"POST /jobs with request body: {validated_body}")
-    parsed_user_info = auth.authorize_user(authorization, user_info)
+    parsed_user_info = auth_client.authorize_user(authorization, user_info)
     response_list = []
     for job_request in validated_body.jobs:
         try:
