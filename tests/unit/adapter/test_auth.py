@@ -1,5 +1,4 @@
 import pytest
-from pytest import MonkeyPatch
 
 from job_service.adapter.auth import AuthClient
 from job_service.exceptions import AuthError
