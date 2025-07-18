@@ -10,11 +10,15 @@ from jwt.exceptions import (
 )
 
 from job_service.config import environment
-from job_service.exceptions import AuthError
+from job_service.exceptions import AuthError, InternalServerError
 from job_service.adapter.db.models import UserInfo
 
 
 logger = logging.getLogger()
+
+USER_FIRST_NAME_KEY = "user/firstName"
+USER_LAST_NAME_KEY = "user/lastName"
+USER_ID_KEY = "user/uuid"
 
 
 class AuthClient:
@@ -60,7 +64,7 @@ class AuthClient:
                         "aud",
                         "sub",
                         "accreditation/role",
-                        "user/uuid",
+                        USER_ID_KEY,
                     ]
                 },
             )
@@ -73,20 +77,20 @@ class AuthClient:
                 algorithms=["RS256", "RS512"],
                 options={
                     "require": [
-                        "user/uuid",
-                        "user/firstName",
-                        "user/lastName",
+                        USER_ID_KEY,
+                        USER_FIRST_NAME_KEY,
+                        USER_LAST_NAME_KEY,
                     ],
                     "verify_aud": False,
                 },
             )
-            if decoded_authorization.get("user/uuid") != decoded_user_info.get(
-                "user/uuid"
+            if decoded_authorization.get(USER_ID_KEY) != decoded_user_info.get(
+                USER_ID_KEY
             ):
                 raise AuthError("Token mismatch")
-            user_id = decoded_user_info.get("user/uuid")
-            first_name = decoded_user_info.get("user/firstName")
-            last_name = decoded_user_info.get("user/lastName")
+            user_id = decoded_user_info.get(USER_ID_KEY)
+            first_name = decoded_user_info.get(USER_FIRST_NAME_KEY)
+            last_name = decoded_user_info.get(USER_LAST_NAME_KEY)
             return UserInfo(
                 user_id=str(user_id),
                 first_name=str(first_name),
@@ -106,7 +110,7 @@ class AuthClient:
         ) as e:
             raise AuthError(f"Unauthorized: {e}") from e
         except Exception as e:
-            raise Exception(f"Internal Server Error {e}") from e
+            raise InternalServerError(f"Internal Server Error {e}") from e
 
 
 def get_auth_client() -> AuthClient:

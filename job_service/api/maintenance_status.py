@@ -19,9 +19,6 @@ def set_status(
     maintenance_status_request: MaintenanceStatusRequest,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
-    logger.info(
-        f"POST /maintenance-status with request body: {maintenance_status_request}"
-    )
     new_status = database_client.set_maintenance_status(
         maintenance_status_request.msg, maintenance_status_request.paused
     )
@@ -44,6 +41,5 @@ def get_status(
 def get_history(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
-    logger.info("GET /maintenance-history")
     documents = database_client.get_maintenance_history()
     return documents

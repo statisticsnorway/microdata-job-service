@@ -13,6 +13,7 @@ from job_service.api import maintenance_status
 from job_service.api import observability
 from job_service.exceptions import (
     AuthError,
+    InternalServerError,
     JobExistsException,
     NotFoundException,
     NameValidationError,
@@ -58,6 +59,14 @@ def handle_auth_error(_req: Request, e: AuthError):
 
 @app.exception_handler(Exception)
 def handle_unknown_error(_req: Request, e: Exception):
+    logger.exception(e)
+    return JSONResponse(
+        status_code=500, content={"message": "Internal Server Error"}
+    )
+
+
+@app.exception_handler(InternalServerError)
+def handle_internal_server_error(_req: Request, e: InternalServerError):
     logger.exception(e)
     return JSONResponse(
         status_code=500, content={"message": "Internal Server Error"}

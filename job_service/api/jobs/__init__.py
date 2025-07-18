@@ -45,7 +45,6 @@ def new_job(
     database_client: db.DatabaseClient = Depends(db.get_database_client),
     auth_client: auth.AuthClient = Depends(auth.get_auth_client),
 ):
-    logger.info(f"POST /jobs with request body: {validated_body}")
     parsed_user_info = auth_client.authorize_user(authorization, user_info)
     response_list = []
     for job_request in validated_body.jobs:
@@ -89,7 +88,6 @@ def get_job(
     job_id: str,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
-    logger.info(f"GET /jobs/{job_id}")
     return database_client.get_job(job_id).model_dump(
         exclude_none=True, by_alias=True
     )
@@ -101,10 +99,6 @@ def update_job(
     validated_body: UpdateJobRequest,
     database_client: db.DatabaseClient = Depends(db.get_database_client),
 ):
-    logger.info(
-        f"PUT /jobs/{job_id} with request body: "
-        f"{validated_body.model_dump(exclude_none=True, by_alias=True)}"
-    )
     job = database_client.update_job(
         job_id,
         validated_body.status,
