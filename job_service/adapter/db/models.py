@@ -1,10 +1,44 @@
+from enum import StrEnum
 from datetime import datetime
 from typing import List, Optional, Union
 
 from pydantic import model_validator, field_serializer
 
 from job_service.model.camelcase_model import CamelModel
-from job_service.model.enums import JobStatus, ReleaseStatus, Operation
+
+
+class JobStatus(StrEnum):
+    QUEUED = "queued"
+    INITIATED = "initiated"
+    VALIDATING = "validating"
+    DECRYPTING = "decrypting"
+    TRANSFORMING = "transforming"
+    PSEUDONYMIZING = "pseudonymizing"
+    ENRICHING = "enriching"  # legacy
+    CONVERTING = "converting"  # legacy
+    PARTITIONING = "partitioning"
+    BUILT = "built"
+    IMPORTING = "importing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class Operation(StrEnum):
+    BUMP = "BUMP"
+    ADD = "ADD"
+    CHANGE = "CHANGE"
+    PATCH_METADATA = "PATCH_METADATA"
+    SET_STATUS = "SET_STATUS"
+    DELETE_DRAFT = "DELETE_DRAFT"
+    REMOVE = "REMOVE"
+    ROLLBACK_REMOVE = "ROLLBACK_REMOVE"
+    DELETE_ARCHIVE = "DELETE_ARCHIVE"
+
+
+class ReleaseStatus(StrEnum):
+    DRAFT = "DRAFT"
+    PENDING_RELEASE = "PENDING_RELEASE"
+    PENDING_DELETE = "PENDING_DELETE"
 
 
 class UserInfo(CamelModel, extra="forbid"):
@@ -80,13 +114,21 @@ class Job(CamelModel, use_enum_values=True):
             case "SET_STATUS":
                 return [
                     self.parameters.operation,
-                    self.parameters.release_status,
+                    str(self.parameters.release_status),
                 ]
             case "BUMP":
                 return [
-                    self.parameters.operation,
-                    self.parameters.bump_from_version,
-                    self.parameters.bump_to_version,
+                    str(self.parameters.operation),
+                    str(self.parameters.bump_from_version),
+                    str(self.parameters.bump_to_version),
                 ]
             case _:
                 return [self.parameters.operation]
+
+
+class Target(CamelModel, use_enum_values=True, extra="forbid"):
+    name: str
+    last_updated_at: str
+    status: JobStatus
+    last_updated_by: UserInfo
+    action: List[str]

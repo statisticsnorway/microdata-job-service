@@ -10,14 +10,15 @@ from job_service.exceptions import (
     JobExistsException,
     NotFoundException,
 )
-from job_service.model.job import Job, UserInfo, Log
-from job_service.model.target import Target
-from job_service.model.request import (
-    GetJobRequest,
-    NewJobRequest,
-    UpdateJobRequest,
-    MaintenanceStatusRequest,
+from job_service.adapter.db.models import (
+    Job,
+    JobStatus,
+    Operation,
+    UserInfo,
+    Log,
+    Target,
 )
+
 
 logger = logging.getLogger()
 
@@ -165,10 +166,26 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def get_jobs(self, query: GetJobRequest) -> list[Job]:
+    def get_jobs(
+        self,
+        status: JobStatus | None,
+        operations: list[Operation] | None,
+        ignore_completed: bool = False,
+    ) -> list[Job]:
         """
         Returns list of jobs with matching status from database.
         """
+        where_conditions = []
+        if status is not None:
+            where_conditions.append(f"status = '{status}'")
+        if ignore_completed:
+            where_conditions.append("status NOT IN ('completed', 'failed')")
+        if operations is not None:
+            in_clause = ",".join([f"'{str(op)}'" for op in operations])
+            where_conditions.append(
+                f"json_extract(parameters, '$.operation')  IN ({in_clause})"
+            )
+
         conn = self._conn()
         try:
             cursor = conn.cursor()
@@ -195,7 +212,7 @@ class SqliteDbClient:
                         ) AS job_log_row
                     ), '[]') AS logs_json
                 FROM job j
-                {query.to_sqlite_where_condition()}
+                {"WHERE " + " AND ".join(where_conditions) if where_conditions else ""}
                 """,
             ).fetchall()
             if not job_rows:
@@ -272,15 +289,12 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def new_job(
-        self, new_job_request: NewJobRequest, user_info: UserInfo
-    ) -> Job:
+    def new_job(self, new_job: Job) -> Job:
         """
         Creates a new job for supplied command, status and dataset_name, and
         returns job_id of created job.
         Raises JobExistsException if job already exists in database.
         """
-        job = new_job_request.generate_job_from_request("", user_info)
         conn = self._conn()
         try:
             conn.execute("BEGIN IMMEDIATE")
@@ -291,7 +305,7 @@ class SqliteDbClient:
                 WHERE target = ? AND datastore_id = ? AND status NOT IN ('completed', 'failed')
                 LIMIT 1
                 """,
-                (job.parameters.target, 1),
+                (new_job.parameters.target, 1),
             )
             in_progress_job = cursor.fetchone()
             if not in_progress_job:
@@ -303,22 +317,26 @@ class SqliteDbClient:
                     ( ?, ?, ?, ?, ?, ?)
                     """,
                     (
-                        job.parameters.target,
+                        new_job.parameters.target,
                         1,
-                        job.status,
-                        json.dumps(job.parameters.model_dump(by_alias=True)),
-                        job.created_at,
-                        json.dumps(job.created_by.model_dump(by_alias=True)),
+                        new_job.status,
+                        json.dumps(
+                            new_job.parameters.model_dump(by_alias=True)
+                        ),
+                        new_job.created_at,
+                        json.dumps(
+                            new_job.created_by.model_dump(by_alias=True)
+                        ),
                     ),
                 )
                 job_id = cursor.lastrowid
                 conn.commit()
-                job.job_id = str(job_id)
-                return job
+                new_job.job_id = str(job_id)
+                return new_job
             else:
                 conn.rollback()
                 raise JobExistsException(
-                    f"Job already in progress for {job.parameters.target}"
+                    f"Job already in progress for {new_job.parameters.target}"
                 )
         except Exception as e:
             conn.rollback()
@@ -326,7 +344,13 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def update_job(self, job_id: str, body: UpdateJobRequest) -> Job:
+    def update_job(
+        self,
+        job_id: str,
+        status: JobStatus | None,
+        description: str | None,
+        log: str | None,
+    ) -> Job:
         """
         Updates job with supplied job_id with new status, log, or description.
         Ensures atomic, isolated update.
@@ -342,10 +366,10 @@ class SqliteDbClient:
                 raise JobAlreadyCompleteException(
                     f"Job with id {job_id} has already been completed"
                 )
-            if body.description is not None:
+            if description is not None:
                 cursor.execute(
                     "UPDATE job SET parameters = json_set(parameters, '$.description', ?) WHERE job_id = ?",
-                    (body.description, int(job_id)),
+                    (description, int(job_id)),
                 )
                 cursor.execute(
                     """
@@ -355,26 +379,26 @@ class SqliteDbClient:
                     (job_id, "Added update description", datetime.now()),
                 )
 
-            if body.status is not None:
+            if status is not None:
                 cursor.execute(
                     "UPDATE job SET status = ? WHERE job_id = ?",
-                    (body.status, job_id),
+                    (status, job_id),
                 )
                 cursor.execute(
                     """
                     INSERT INTO job_log (job_id, msg, at)
                     VALUES (?, ?, ?)
                     """,
-                    (job_id, f"Set status: {body.status}", datetime.now()),
+                    (job_id, f"Set status: {status}", datetime.now()),
                 )
 
-            if body.log is not None:
+            if log is not None:
                 cursor.execute(
                     """
                     INSERT INTO job_log (job_id, msg, at)
                     VALUES (?, ?, ?)
                     """,
-                    (job_id, body.log, datetime.now()),
+                    (job_id, log, datetime.now()),
                 )
             conn.commit()
             job_row = self._get_job_row_with_logs(cursor, job_id)
@@ -508,9 +532,7 @@ class SqliteDbClient:
         finally:
             conn.close()
 
-    def set_maintenance_status(
-        self, status_request: MaintenanceStatusRequest
-    ) -> dict:
+    def set_maintenance_status(self, msg: str, paused: bool) -> dict:
         """
         Inserts a new maintenance status record.
         """
@@ -526,8 +548,8 @@ class SqliteDbClient:
                 """,
                 (
                     1,
-                    status_request.msg,
-                    status_request.paused,
+                    msg,
+                    paused,
                     timestamp,
                 ),
             )

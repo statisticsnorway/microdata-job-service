@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from job_service.model.job import Job
+from job_service.adapter.db.models import Job
 
 
 RESOURCE_DIR = "tests/resources/model"

@@ -3,10 +3,9 @@ from typing import List, Optional
 
 from pydantic import model_validator
 
-from job_service.exceptions import BadQueryException
 from job_service.model.camelcase_model import CamelModel
-from job_service.model.enums import JobStatus, Operation, ReleaseStatus
-from job_service.model.job import (
+from job_service.adapter.db.models import JobStatus, Operation, ReleaseStatus
+from job_service.adapter.db.models import (
     DatastoreVersion,
     Job,
     JobParameters,
@@ -80,7 +79,7 @@ class NewJobRequest(CamelModel, extra="forbid", use_enum_values=True):
             )
         return Job(
             job_id=job_id,
-            status="queued",
+            status=JobStatus("queued"),
             parameters=job_parameters,
             created_at=datetime.now().isoformat(),
             created_by=user_info,
@@ -95,62 +94,3 @@ class UpdateJobRequest(CamelModel, extra="forbid"):
     status: Optional[JobStatus] = None
     description: Optional[str] = None
     log: Optional[str] = None
-
-
-class MaintenanceStatusRequest(CamelModel, extra="forbid"):
-    msg: str
-    paused: bool
-
-
-class GetJobRequest(CamelModel, extra="forbid", use_enum_values=True):
-    status: Optional[JobStatus] = None
-    operation: Optional[List[Operation]] = None
-    ignoreCompleted: Optional[bool] = False
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_query(cls, values: dict):  # pylint: disable=no-self-argument
-        return {
-            "status": values.get("status", None),
-            "operation": values.get("operation", None),
-            "ignoreCompleted": values.get("ignoreCompleted") or False,
-        }
-
-    def to_mongo_query(self):
-        conditions = [
-            (None if self.status is None else {"status": self.status}),
-            (
-                None
-                if self.operation is None
-                else {"parameters.operation": {"$in": self.operation}}
-            ),
-        ]
-        conditions = [
-            condition for condition in conditions if condition is not None
-        ]
-        if len(conditions) == 0:
-            return {}
-        if len(conditions) == 1:
-            return conditions[0]
-        elif len(conditions) == 2:
-            return {"$and": conditions}
-        else:
-            raise BadQueryException(
-                "Unable to transform GetJobRequest to Mongo query"
-            )
-
-    def to_sqlite_where_condition(self):
-        where_conditions = []
-        if self.status is not None:
-            where_conditions.append(f"status = '{self.status}'")
-        if self.ignoreCompleted:
-            where_conditions.append("status NOT IN ('completed', 'failed')")
-        if self.operation is not None:
-            in_clause = ",".join([f"'{str(op)}'" for op in self.operation])
-            where_conditions.append(
-                f"json_extract(parameters, '$.operation')  IN ({in_clause})"
-            )
-        if where_conditions:
-            return "WHERE " + " AND ".join(where_conditions)
-        else:
-            return ""
