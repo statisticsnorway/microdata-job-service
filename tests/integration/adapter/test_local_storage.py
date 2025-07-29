@@ -1,5 +1,5 @@
-from job_service.adapter import local_storage
-from job_service.model.importable_dataset import ImportableDataset
+from job_service.adapter.local_storage import input_directory
+from job_service.adapter.local_storage.input_directory import ImportableDataset
 
 
 expected_datasets = [
@@ -22,7 +22,7 @@ expected_datasets = [
 
 
 def test_get_importable_datasets():
-    actual_datasets = local_storage.get_importable_datasets()
+    actual_datasets = input_directory.get_importable_datasets()
     assert len(actual_datasets) == 4
     for dataset in expected_datasets:
         assert dataset in actual_datasets
