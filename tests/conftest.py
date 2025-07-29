@@ -37,7 +37,7 @@ def insert_datastore_defintion():
         """,
         (
             "testdatastore",
-            "no.ssb.testdatstore",
+            "no.ssb.testdatastore",
             "this is a test datastore",
             "resources/TEST_DATASTORE",
         ),
