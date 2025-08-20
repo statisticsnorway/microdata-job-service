@@ -1,3 +1,5 @@
+This repository has been archived. Microdata-job-service is now part of [microdata-datastore-api](https://github.com/statisticsnorway/microdata-datastore-api).
+
 # microdata-job-service
 Service for managing jobs in the microdata platform.
 
